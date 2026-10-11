@@ -102,6 +102,15 @@ export function buildFFmpegCommand(inputPath, outputPath, settings, formatArgs) 
     cmd = cmd.outputOptions(['-q:v', settings.quality])
   }
 
+  // Use fast preset for CPU encoding if not explicitly set
+  const isGpuCodec = resolvedVideoCodec && (resolvedVideoCodec.includes('nvenc') || resolvedVideoCodec.includes('qsv') || resolvedVideoCodec.includes('amf'))
+  if (!isGpuCodec && !settings.preset && !settings.videoCodec) {
+    cmd = cmd.outputOptions(['-preset', 'fast'])
+  }
+
+  // Let FFmpeg use all available CPU threads
+  cmd = cmd.outputOptions(['-threads', '0'])
+
   if (settings.subtitleFile && fs.existsSync(settings.subtitleFile)) {
     cmd = cmd.outputOptions(['-vf', `subtitles=${settings.subtitleFile.replace(/\\/g, '/')}`])
   }

@@ -9,7 +9,7 @@ export const useStore = create((set, get) => ({
   tasks: [],
   settings: {
     outputDir: '',
-    maxConcurrent: 2,
+    maxConcurrent: Math.max(2, Math.min(8, Math.floor((navigator.hardwareConcurrency || 4) / 2))),
     deleteSourceAfter: false,
     showNotifications: true,
     shutdownOnComplete: false,
