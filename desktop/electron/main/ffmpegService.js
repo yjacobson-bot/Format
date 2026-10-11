@@ -108,10 +108,18 @@ export function buildFFmpegCommand(inputPath, outputPath, settings, formatArgs) 
     cmd = cmd.outputOptions(['-preset', 'fast'])
   }
 
-  // Allocate threads proportionally: each job gets cores / concurrentJobs
+  // Thread allocation based on user setting
   const totalCores = require('os').cpus().length
-  const activeCount = Math.max(1, activeJobs.size)
-  const threadsPerJob = Math.max(1, Math.floor(totalCores / activeCount))
+  let threadsPerJob
+  if (settings.threadMode === 'max') {
+    threadsPerJob = totalCores
+  } else if (settings.threadMode === 'manual' && settings.threadCount > 0) {
+    threadsPerJob = Math.min(settings.threadCount, totalCores)
+  } else {
+    // 'optimal': proportional — each job gets cores / activeJobs
+    const activeCount = Math.max(1, activeJobs.size)
+    threadsPerJob = Math.max(1, Math.floor(totalCores / activeCount))
+  }
   cmd = cmd.outputOptions(['-threads', String(threadsPerJob)])
 
   if (settings.subtitleFile && fs.existsSync(settings.subtitleFile)) {

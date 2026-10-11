@@ -15,6 +15,8 @@ export const useStore = create((set, get) => ({
     showNotifications: true,
     shutdownOnComplete: false,
     playSoundOnComplete: true,
+    threadMode: 'optimal',   // 'max' | 'optimal' | 'manual'
+    threadCount: null,        // number when threadMode === 'manual'
   },
 
   // The "Convert to X" setup window state

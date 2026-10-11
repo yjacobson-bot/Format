@@ -241,11 +241,16 @@ export default function App() {
       if (dir) await window.electronAPI?.ensureDir(dir)
 
       setTaskRunning(task.id, outputPath)
+      const globalSettings = useStore.getState().settings
       await window.electronAPI?.startConversion({
         taskId: task.id,
         inputPath: task.inputPath,
         outputPath,
-        settings: task.settings || {},
+        settings: {
+          ...task.settings || {},
+          threadMode: globalSettings.threadMode || 'optimal',
+          threadCount: globalSettings.threadCount || null,
+        },
         formatArgs: task.outputFormat?.ffmpegArgs || [],
       })
     } catch (err) {
