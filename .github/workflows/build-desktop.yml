@@ -44,6 +44,7 @@ jobs:
           draft: false
           prerelease: false
           files: desktop/dist/*.exe
+          overwrite: true
           body: |
             ## Format Factory — Windows Installer
 
