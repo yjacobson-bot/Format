@@ -79,10 +79,11 @@ export default function SettingsPage() {
   const threadCount = settings.threadCount || Math.max(1, Math.floor(cpuCount / 2))
 
   const threadPreviewLabel = {
-    max:     `${cpuCount} שרשורים (כל הליבות)`,
-    optimal: `~${Math.max(1, Math.floor(cpuCount / (settings.maxConcurrent || 2)))} שרשורים לכל המרה`,
-    manual:  `${threadCount} שרשורים (בחירה ידנית)`,
-  }[threadMode]
+    max:        `${cpuCount} שרשורים (כל הליבות)`,
+    optimal:    `~${Math.max(1, Math.floor(cpuCount / (settings.maxConcurrent || 2)))} שרשורים לכל המרה`,
+    manual:     `${threadCount} שרשורים (בחירה ידנית)`,
+    background: `${Math.max(1, Math.floor(cpuCount / 2))} שרשורים + עדיפות נמוכה — שאר התוכנות לא יתקעו`,
+  }[threadMode] || ''
 
   const SEL = { fontSize: 11, padding: '4px 8px', border: '1px solid #d1d5db', borderRadius: 4, background: '#fff', color: '#374151', cursor: 'pointer' }
 
@@ -162,24 +163,25 @@ export default function SettingsPage() {
             מחשב זה: <strong>{cpuCount} ליבות</strong> זמינות לFFmpeg
           </div>
 
-          <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>
             {[
-              { value: 'optimal', label: 'אופטימלי', sub: 'מאזן בין מהירות לזמינות' },
-              { value: 'max',     label: 'מקסימלי',  sub: 'כל הליבות לכל המרה' },
-              { value: 'manual',  label: 'ידני',     sub: 'בחירת מספר ספציפי' },
+              { value: 'optimal',    label: 'אופטימלי',  sub: 'מאזן בין מהירות לזמינות' },
+              { value: 'max',        label: 'מקסימלי',   sub: 'כל הליבות לכל המרה' },
+              { value: 'manual',     label: 'ידני',      sub: 'בחירת מספר ספציפי' },
+              { value: 'background', label: 'רקע',       sub: 'מחשב נשאר רספונסיבי' },
             ].map(opt => (
               <button
                 key={opt.value}
                 onClick={() => updateSettings({ threadMode: opt.value })}
                 style={{
-                  flex: 1, padding: '8px 6px', border: '1px solid',
-                  borderColor: threadMode === opt.value ? '#2563eb' : '#d1d5db',
-                  borderRadius: 5, background: threadMode === opt.value ? '#eff6ff' : '#fff',
+                  flex: '1 1 calc(50% - 6px)', minWidth: 90, padding: '8px 6px', border: '1px solid',
+                  borderColor: threadMode === opt.value ? (opt.value === 'background' ? '#16a34a' : '#2563eb') : '#d1d5db',
+                  borderRadius: 5, background: threadMode === opt.value ? (opt.value === 'background' ? '#f0fdf4' : '#eff6ff') : '#fff',
                   cursor: 'pointer', textAlign: 'center',
                 }}
               >
-                <div style={{ fontSize: 11, fontWeight: 700, color: threadMode === opt.value ? '#1d4ed8' : '#374151' }}>{opt.label}</div>
-                <div style={{ fontSize: 9, color: threadMode === opt.value ? '#3b82f6' : '#9ca3af', marginTop: 2 }}>{opt.sub}</div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: threadMode === opt.value ? (opt.value === 'background' ? '#15803d' : '#1d4ed8') : '#374151' }}>{opt.label}</div>
+                <div style={{ fontSize: 9, color: threadMode === opt.value ? (opt.value === 'background' ? '#16a34a' : '#3b82f6') : '#9ca3af', marginTop: 2 }}>{opt.sub}</div>
               </button>
             ))}
           </div>
@@ -196,9 +198,13 @@ export default function SettingsPage() {
             </Row>
           )}
 
-          <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 4, padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Icon d={ICONS.info} size={12} color="#0284c7" />
-            <span style={{ fontSize: 10, color: '#0369a1' }}>{threadPreviewLabel}</span>
+          <div style={{
+            background: threadMode === 'background' ? '#f0fdf4' : '#f0f9ff',
+            border: `1px solid ${threadMode === 'background' ? '#bbf7d0' : '#bae6fd'}`,
+            borderRadius: 4, padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 6,
+          }}>
+            <Icon d={ICONS.info} size={12} color={threadMode === 'background' ? '#16a34a' : '#0284c7'} />
+            <span style={{ fontSize: 10, color: threadMode === 'background' ? '#15803d' : '#0369a1' }}>{threadPreviewLabel}</span>
           </div>
         </Card>
 

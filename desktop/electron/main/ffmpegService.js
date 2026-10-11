@@ -4,6 +4,7 @@ import ffprobeInstaller from '@ffprobe-installer/ffprobe'
 import path from 'path'
 import fs from 'fs'
 import { spawnSync } from 'child_process'
+import os from 'os'
 
 function unpackedPath(p) {
   return p.replace('app.asar', 'app.asar.unpacked')
@@ -109,12 +110,15 @@ export function buildFFmpegCommand(inputPath, outputPath, settings, formatArgs) 
   }
 
   // Thread allocation based on user setting
-  const totalCores = require('os').cpus().length
+  const totalCores = os.cpus().length
   let threadsPerJob
   if (settings.threadMode === 'max') {
     threadsPerJob = totalCores
   } else if (settings.threadMode === 'manual' && settings.threadCount > 0) {
     threadsPerJob = Math.min(settings.threadCount, totalCores)
+  } else if (settings.threadMode === 'background') {
+    // Half cores max — OS priority set after spawn
+    threadsPerJob = Math.max(1, Math.floor(totalCores / 2))
   } else {
     // 'optimal': proportional — each job gets cores / activeJobs
     const activeCount = Math.max(1, activeJobs.size)
@@ -183,8 +187,19 @@ function isGpuError(msg) {
   return GPU_ERROR_PATTERNS.some(p => msg.toLowerCase().includes(p.toLowerCase()))
 }
 
-function runCmd(taskId, cmd, totalDuration, onProgress, onComplete, onError, fallbackFn) {
+function runCmd(taskId, cmd, totalDuration, onProgress, onComplete, onError, fallbackFn, isBackground) {
   let lastProgressTime = 0
+
+  if (isBackground) {
+    cmd.on('start', () => {
+      try {
+        if (cmd._ffmpegProc?.pid) {
+          // PRIORITY_BELOW_NORMAL = 10 on Windows, ~10 on Unix (nice value)
+          os.setPriority(cmd._ffmpegProc.pid, 10)
+        }
+      } catch {}
+    })
+  }
 
   cmd.on('stderr', (line) => {
     const progress = parseProgressLine(line, totalDuration)
@@ -224,18 +239,20 @@ export function startConversion(taskId, inputPath, outputPath, settings, formatA
   const useGpu = settings.hwAccel && settings.hwAccel !== 'cpu'
   const cmd = buildFFmpegCommand(inputPath, outputPath, settings, formatArgs)
 
+  const isBackground = settings.threadMode === 'background'
+
   const fallbackToCpu = () => {
     const cpuSettings = { ...settings, hwAccel: 'cpu' }
     const cpuCmd = buildFFmpegCommand(inputPath, outputPath, cpuSettings, formatArgs)
-    runCmd(taskId, cpuCmd, 0, onProgress, onComplete, onError, null)
+    runCmd(taskId, cpuCmd, 0, onProgress, onComplete, onError, null, isBackground)
   }
 
   // Get duration for accurate progress
   probeFile(inputPath).then(meta => {
     const totalDuration = meta?.format?.duration || 0
-    runCmd(taskId, cmd, totalDuration, onProgress, onComplete, onError, useGpu ? fallbackToCpu : null)
+    runCmd(taskId, cmd, totalDuration, onProgress, onComplete, onError, useGpu ? fallbackToCpu : null, isBackground)
   }).catch(() => {
-    runCmd(taskId, cmd, 0, onProgress, onComplete, onError, useGpu ? fallbackToCpu : null)
+    runCmd(taskId, cmd, 0, onProgress, onComplete, onError, useGpu ? fallbackToCpu : null, isBackground)
   })
 }
 

@@ -15,7 +15,7 @@ export const useStore = create((set, get) => ({
     showNotifications: true,
     shutdownOnComplete: false,
     playSoundOnComplete: true,
-    threadMode: 'optimal',   // 'max' | 'optimal' | 'manual'
+    threadMode: 'optimal',   // 'max' | 'optimal' | 'manual' | 'background'
     threadCount: null,        // number when threadMode === 'manual'
   },
 
