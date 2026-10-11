@@ -86,6 +86,28 @@ export default function SettingsPage() {
           ))}
         </div>
 
+        {/* About */}
+        <div style={{
+          background: '#f0f4ff', border: '1px solid #c7d2fe', borderRadius: 2, padding: 12,
+          borderRight: '3px solid #1d4ed8',
+        }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#1d4ed8', marginBottom: 6 }}>אודות פורמט נקי v2.0</div>
+          <div style={{ fontSize: 11, color: '#3730a3', lineHeight: 1.8 }}>
+            נבנה ופותח על ידי <strong>yj05485</strong> ממתמחים טופ.<br />
+            מבוסס FFmpeg — ממיר מדיה חינמי, 100% אופליין, ללא פרסומות.<br />
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 6 }}>
+              לדף העדכונים:{' '}
+              <a
+                href="https://mitmachim.top/post/1262183"
+                onClick={e => { e.preventDefault(); window.open('https://mitmachim.top/post/1262183') }}
+                style={{ color: '#1d4ed8', fontWeight: 600 }}
+              >
+                mitmachim.top/post/1262183
+              </a>
+            </span>
+          </div>
+        </div>
+
       </div>
     </div>
   )
