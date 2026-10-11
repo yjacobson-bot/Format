@@ -1,6 +1,6 @@
 {
   "name": "format-factory",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Free open-source multimedia converter",
   "author": "Format Factory Contributors",
   "main": "out/main/index.js",
@@ -37,6 +37,10 @@
     "productName": "Format Factory",
     "directories": { "output": "dist" },
     "files": ["out/**/*", "!node_modules/.cache"],
+    "asarUnpack": [
+      "node_modules/@ffmpeg-installer/**",
+      "node_modules/@ffprobe-installer/**"
+    ],
     "win": {
       "target": [{ "target": "nsis", "arch": ["x64"] }],
       "icon": "resources/icon.ico",

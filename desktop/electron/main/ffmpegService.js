@@ -4,8 +4,12 @@ import ffprobeInstaller from '@ffprobe-installer/ffprobe'
 import path from 'path'
 import fs from 'fs'
 
-ffmpeg.setFfmpegPath(ffmpegInstaller.path)
-ffmpeg.setFfprobePath(ffprobeInstaller.path)
+function unpackedPath(p) {
+  return p.replace('app.asar', 'app.asar.unpacked')
+}
+
+ffmpeg.setFfmpegPath(unpackedPath(ffmpegInstaller.path))
+ffmpeg.setFfprobePath(unpackedPath(ffprobeInstaller.path))
 
 const activeJobs = new Map()
 
