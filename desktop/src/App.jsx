@@ -23,9 +23,15 @@ function detectCategory(filename) {
 // When files are dropped/added without a specific format chosen,
 // show a quick format picker overlay
 function FormatPicker({ category, files, onPick, onCancel }) {
-  const LISTS = { video: VIDEO_FORMATS, audio: AUDIO_FORMATS, image: IMAGE_FORMATS }
-  const formats = LISTS[category] || VIDEO_FORMATS
   const LABELS = { video: 'וידאו', audio: 'אודיו', image: 'תמונות' }
+
+  // For video files, also offer audio output formats (extract audio)
+  const sections = category === 'video'
+    ? [
+        { label: 'וידאו', cat: 'video', formats: VIDEO_FORMATS },
+        { label: 'אודיו (חילוץ)', cat: 'audio', formats: AUDIO_FORMATS },
+      ]
+    : [{ label: LABELS[category] || category, cat: category, formats: category === 'audio' ? AUDIO_FORMATS : IMAGE_FORMATS }]
 
   return (
     <div style={{
@@ -34,7 +40,8 @@ function FormatPicker({ category, files, onPick, onCancel }) {
     }} onClick={e => { if (e.target === e.currentTarget) onCancel() }}>
       <div style={{
         background: '#f5f5f5', border: '1px solid #888', borderRadius: 4,
-        width: 480, boxShadow: '0 8px 32px rgba(0,0,0,0.35)',
+        width: 520, maxHeight: '80vh', display: 'flex', flexDirection: 'column',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.35)',
       }}>
         <div style={{
           background: 'linear-gradient(180deg,#1a5fa8,#0d3d7a)',
@@ -44,26 +51,33 @@ function FormatPicker({ category, files, onPick, onCancel }) {
           <span>🔄 {files.length} קובץ/ים — המר ל-?</span>
           <button onClick={onCancel} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', cursor: 'pointer', borderRadius: 2, padding: '1px 7px' }}>✕</button>
         </div>
-        <div style={{ padding: 12 }}>
-          <div style={{ fontSize: 11, color: '#555', marginBottom: 8 }}>
+        <div style={{ padding: 12, overflow: 'auto', flex: 1 }}>
+          <div style={{ fontSize: 11, color: '#555', marginBottom: 10 }}>
             זוהו קבצי <strong>{LABELS[category] || category}</strong>. בחר פורמט יעד:
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            {formats.map(fmt => (
-              <button key={fmt.id} onClick={() => onPick(fmt)} style={{
-                width: 90, height: 50, display: 'flex', flexDirection: 'column',
-                alignItems: 'center', justifyContent: 'center', gap: 2,
-                cursor: 'pointer', background: '#fff', border: '1px solid #c8d8e8',
-                borderRadius: 4, fontSize: 11, fontWeight: 700,
-              }}
-                onMouseEnter={e => { e.currentTarget.style.background = '#e8f0fc'; e.currentTarget.style.borderColor = '#0066cc' }}
-                onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = '#c8d8e8' }}
-              >
-                <span style={{ color: '#0066cc', fontSize: 13 }}>→</span>
-                {fmt.label}
-              </button>
-            ))}
-          </div>
+          {sections.map(sec => (
+            <div key={sec.cat} style={{ marginBottom: 10 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: '#1a3f6f', borderBottom: '1px solid #dde', paddingBottom: 3, marginBottom: 6 }}>
+                {sec.cat === 'audio' ? '🎵' : '🎬'} {sec.label}
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {sec.formats.map(fmt => (
+                  <button key={fmt.id} onClick={() => onPick({ ...fmt, _pickedCategory: sec.cat })} style={{
+                    width: 90, height: 50, display: 'flex', flexDirection: 'column',
+                    alignItems: 'center', justifyContent: 'center', gap: 2,
+                    cursor: 'pointer', background: '#fff', border: '1px solid #c8d8e8',
+                    borderRadius: 4, fontSize: 11, fontWeight: 700,
+                  }}
+                    onMouseEnter={e => { e.currentTarget.style.background = '#e8f0fc'; e.currentTarget.style.borderColor = '#0066cc' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = '#c8d8e8' }}
+                  >
+                    <span style={{ color: '#0066cc', fontSize: 13 }}>→</span>
+                    {fmt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
         <div style={{ padding: '6px 12px', borderTop: '1px solid #ddd', display: 'flex', justifyContent: 'flex-end' }}>
           <button onClick={onCancel} style={{ fontSize: 11, padding: '3px 14px', cursor: 'pointer', background: '#f0f0f0', border: '1px solid #aaa', borderRadius: 2 }}>ביטול</button>
@@ -220,7 +234,9 @@ export default function App() {
           category={formatPicker.category}
           files={formatPicker.files}
           onPick={(fmt) => {
-            openSetupWindow(fmt, formatPicker.category, formatPicker.files)
+            const cat = fmt._pickedCategory || formatPicker.category
+            const { _pickedCategory, ...cleanFmt } = fmt
+            openSetupWindow(cleanFmt, cat, formatPicker.files)
             setFormatPicker(null)
           }}
           onCancel={() => setFormatPicker(null)}
