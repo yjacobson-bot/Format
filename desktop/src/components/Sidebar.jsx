@@ -2,85 +2,64 @@ import React from 'react'
 import { useStore } from '../store/useStore'
 
 const CATEGORIES = [
-  { id: 'video',    label: 'וידאו',    emoji: '🎬', color: '#dc2626', bg: '#fee2e2' },
-  { id: 'audio',    label: 'אודיו',    emoji: '🎵', color: '#16a34a', bg: '#dcfce7' },
-  { id: 'image',    label: 'תמונה',   emoji: '🖼️', color: '#1d4ed8', bg: '#dbeafe' },
-  { id: 'dvd',      label: 'DVD/ISO',  emoji: '📀', color: '#7c3aed', bg: '#ede9fe' },
-  { id: 'tools',    label: 'כלים',    emoji: '🔧', color: '#64748b', bg: '#f1f5f9' },
+  { id: 'video',  label: 'וידאו',   emoji: '🎬' },
+  { id: 'audio',  label: 'אודיו',   emoji: '🎵' },
+  { id: 'image',  label: 'תמונה',  emoji: '🖼️' },
+  { id: 'dvd',    label: 'DVD/ISO', emoji: '📀' },
+  { id: 'tools',  label: 'כלים',   emoji: '🔧' },
 ]
 
 export default function Sidebar() {
   const { activeCategory, setActiveCategory } = useStore()
 
   return (
-    <aside
-      className="shrink-0 flex flex-col"
-      style={{ width: 80, background: '#333333', boxShadow: 'inset -2px 0 4px rgba(0,0,0,0.35)' }}
-    >
-      {/* Logo */}
-      <div style={{ background: '#1a1a1a', padding: '10px 4px 8px', textAlign: 'center', borderBottom: '1px solid #555' }}>
-        <div style={{ fontSize: 22 }}>🔄</div>
-        <div style={{ color: '#aaa', fontSize: 8, fontWeight: 700, letterSpacing: 1, marginTop: 2 }}>FORMAT</div>
-        <div style={{ color: '#666', fontSize: 8, letterSpacing: 1 }}>FACTORY</div>
-      </div>
+    <aside style={{
+      width: 90, flexShrink: 0,
+      background: '#f0f0f0',
+      borderLeft: '1px solid #c0c0c0',
+      display: 'flex', flexDirection: 'column',
+      userSelect: 'none',
+    }}>
+      {CATEGORIES.map(cat => {
+        const active = activeCategory === cat.id
+        return (
+          <button
+            key={cat.id}
+            onClick={() => setActiveCategory(cat.id)}
+            style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              padding: '10px 4px 8px', gap: 4,
+              cursor: 'pointer', border: 'none', borderBottom: '1px solid #ddd',
+              background: active ? '#0066cc' : 'transparent',
+              color: active ? '#fff' : '#333',
+              width: '100%', transition: 'background 0.1s',
+            }}
+            onMouseEnter={e => { if (!active) e.currentTarget.style.background = '#dce9f8' }}
+            onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
+          >
+            <span style={{ fontSize: 22 }}>{cat.emoji}</span>
+            <span style={{ fontSize: 10, fontWeight: active ? 700 : 400, lineHeight: 1 }}>{cat.label}</span>
+          </button>
+        )
+      })}
 
-      {/* Category buttons */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 1, paddingTop: 4 }}>
-        {CATEGORIES.map(cat => {
-          const isActive = activeCategory === cat.id
-          return (
-            <button
-              key={cat.id}
-              onClick={() => setActiveCategory(cat.id)}
-              style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center',
-                padding: '10px 4px 8px', gap: 4, cursor: 'pointer', border: 'none',
-                borderRight: `3px solid ${isActive ? cat.color : 'transparent'}`,
-                borderLeft: 'none',
-                background: isActive ? 'rgba(255,255,255,0.1)' : 'transparent',
-                color: isActive ? '#fff' : '#bbb',
-                transition: 'all 0.1s',
-                width: '100%',
-              }}
-              onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = '#444'; e.currentTarget.style.color = '#fff' }}}
-              onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#bbb' }}}
-            >
-              {/* Colored icon circle */}
-              <div style={{
-                width: 36, height: 36, borderRadius: 4,
-                background: isActive ? cat.color : '#4a4a4a',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 18, transition: 'background 0.1s',
-                boxShadow: isActive ? `0 0 8px ${cat.color}88` : 'none',
-              }}>
-                {cat.emoji}
-              </div>
-              <span style={{ fontSize: 10, fontWeight: isActive ? 700 : 400, lineHeight: 1 }}>
-                {cat.label}
-              </span>
-            </button>
-          )
-        })}
-      </div>
+      <div style={{ flex: 1 }} />
 
-      {/* Settings at bottom */}
-      <div style={{ borderTop: '1px solid #555', paddingBottom: 4 }}>
-        <button
-          onClick={() => setActiveCategory('settings')}
-          style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center',
-            padding: '8px 4px', gap: 3, cursor: 'pointer', border: 'none',
-            borderRight: `3px solid ${activeCategory === 'settings' ? '#60a5fa' : 'transparent'}`,
-            borderLeft: 'none',
-            background: activeCategory === 'settings' ? 'rgba(255,255,255,0.1)' : 'transparent',
-            color: activeCategory === 'settings' ? '#fff' : '#999',
-            width: '100%', transition: 'all 0.1s',
-          }}
-        >
-          <span style={{ fontSize: 16 }}>⚙️</span>
-          <span style={{ fontSize: 9 }}>הגדרות</span>
-        </button>
-      </div>
+      {/* Settings */}
+      <button
+        onClick={() => setActiveCategory('settings')}
+        style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
+          padding: '8px 4px', gap: 3, cursor: 'pointer', border: 'none',
+          borderTop: '1px solid #ddd',
+          background: activeCategory === 'settings' ? '#0066cc' : 'transparent',
+          color: activeCategory === 'settings' ? '#fff' : '#666',
+          width: '100%',
+        }}
+      >
+        <span style={{ fontSize: 18 }}>⚙️</span>
+        <span style={{ fontSize: 9 }}>הגדרות</span>
+      </button>
     </aside>
   )
 }

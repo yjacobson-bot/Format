@@ -1,32 +1,89 @@
-import React, { useEffect, useCallback } from 'react'
+import React, { useEffect, useCallback, useState } from 'react'
 import { useStore } from './store/useStore'
+import Toolbar from './components/Toolbar'
 import Sidebar from './components/Sidebar'
-import Header from './components/Header'
-import ConversionQueue from './components/ConversionQueue'
-import VideoPage from './pages/VideoPage'
-import AudioPage from './pages/AudioPage'
-import ImagePage from './pages/ImagePage'
-import DVDPage from './pages/DVDPage'
-import ToolsPage from './pages/ToolsPage'
+import FormatGrid from './components/FormatGrid'
+import Queue from './components/Queue'
+import ConversionSetup from './components/ConversionSetup'
 import SettingsPage from './pages/SettingsPage'
+import {
+  VIDEO_INPUT_EXTENSIONS, AUDIO_INPUT_EXTENSIONS, IMAGE_INPUT_EXTENSIONS,
+  VIDEO_FORMATS, AUDIO_FORMATS, IMAGE_FORMATS,
+} from './utils/formats'
 
-const PAGES = {
-  video: VideoPage,
-  audio: AudioPage,
-  image: ImagePage,
-  dvd: DVDPage,
-  tools: ToolsPage,
-  settings: SettingsPage,
+function detectCategory(filename) {
+  const ext = filename.split('.').pop().toLowerCase()
+  if (VIDEO_INPUT_EXTENSIONS.includes(ext)) return 'video'
+  if (AUDIO_INPUT_EXTENSIONS.includes(ext)) return 'audio'
+  if (IMAGE_INPUT_EXTENSIONS.includes(ext)) return 'image'
+  return null
+}
+
+// When files are dropped/added without a specific format chosen,
+// show a quick format picker overlay
+function FormatPicker({ category, files, onPick, onCancel }) {
+  const LISTS = { video: VIDEO_FORMATS, audio: AUDIO_FORMATS, image: IMAGE_FORMATS }
+  const formats = LISTS[category] || VIDEO_FORMATS
+  const LABELS = { video: 'וידאו', audio: 'אודיו', image: 'תמונות' }
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 900,
+    }} onClick={e => { if (e.target === e.currentTarget) onCancel() }}>
+      <div style={{
+        background: '#f5f5f5', border: '1px solid #888', borderRadius: 4,
+        width: 480, boxShadow: '0 8px 32px rgba(0,0,0,0.35)',
+      }}>
+        <div style={{
+          background: 'linear-gradient(180deg,#1a5fa8,#0d3d7a)',
+          color: '#fff', padding: '7px 12px', fontSize: 13, fontWeight: 700,
+          borderRadius: '4px 4px 0 0', display: 'flex', justifyContent: 'space-between',
+        }}>
+          <span>🔄 {files.length} קובץ/ים — המר ל-?</span>
+          <button onClick={onCancel} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', cursor: 'pointer', borderRadius: 2, padding: '1px 7px' }}>✕</button>
+        </div>
+        <div style={{ padding: 12 }}>
+          <div style={{ fontSize: 11, color: '#555', marginBottom: 8 }}>
+            זוהו קבצי <strong>{LABELS[category] || category}</strong>. בחר פורמט יעד:
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {formats.map(fmt => (
+              <button key={fmt.id} onClick={() => onPick(fmt)} style={{
+                width: 90, height: 50, display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center', gap: 2,
+                cursor: 'pointer', background: '#fff', border: '1px solid #c8d8e8',
+                borderRadius: 4, fontSize: 11, fontWeight: 700,
+              }}
+                onMouseEnter={e => { e.currentTarget.style.background = '#e8f0fc'; e.currentTarget.style.borderColor = '#0066cc' }}
+                onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = '#c8d8e8' }}
+              >
+                <span style={{ color: '#0066cc', fontSize: 13 }}>→</span>
+                {fmt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div style={{ padding: '6px 12px', borderTop: '1px solid #ddd', display: 'flex', justifyContent: 'flex-end' }}>
+          <button onClick={onCancel} style={{ fontSize: 11, padding: '3px 14px', cursor: 'pointer', background: '#f0f0f0', border: '1px solid #aaa', borderRadius: 2 }}>ביטול</button>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export default function App() {
   const {
-    activeCategory, tasks, settings,
+    activeCategory, setActiveCategory, tasks, settings,
+    setupWindow, openSetupWindow, updateSetupFiles,
     setTaskProgress, setTaskComplete, setTaskError, setTaskRunning,
     clearAll, getPendingTasks, getRunningTasks,
   } = useStore()
 
-  // Wire up IPC events from Electron main process
+  const [formatPicker, setFormatPicker] = useState(null) // { category, files }
+  const [dragging, setDragging] = useState(false)
+
+  // Wire IPC events
   useEffect(() => {
     if (!window.electronAPI) return
     const off1 = window.electronAPI.onProgress(({ taskId, percent }) => setTaskProgress(taskId, percent))
@@ -72,37 +129,105 @@ export default function App() {
     pending.slice(0, slots).forEach(runTask)
   }, [getRunningTasks, getPendingTasks, settings.maxConcurrent, runTask])
 
-  // Auto-process queue when tasks change
   useEffect(() => {
     if (getPendingTasks().length > 0 && getRunningTasks().length < (settings.maxConcurrent || 2)) {
       processQueue()
     }
   }, [tasks, processQueue, getPendingTasks, getRunningTasks, settings.maxConcurrent])
 
-  const handleStartAll = () => processQueue()
-  const handleClearAll = () => {
-    window.electronAPI?.cancelAll()
-    clearAll()
+  const handleStop = () => window.electronAPI?.cancelAll()
+
+  // Handle files dropped/added without clicking a specific format
+  function handleFiles(rawFiles) {
+    const files = rawFiles.map(f => ({ name: f.name, path: f.path, size: f.size }))
+    if (!files.length) return
+
+    // Detect predominant category
+    const cats = files.map(f => detectCategory(f.name)).filter(Boolean)
+    const catCount = {}
+    cats.forEach(c => { catCount[c] = (catCount[c] || 0) + 1 })
+    const dominant = Object.entries(catCount).sort((a, b) => b[1] - a[1])[0]?.[0]
+
+    if (!dominant) return // unknown file types
+
+    setActiveCategory(dominant)
+
+    // If a format is currently "selected" via the active category, show format picker
+    setFormatPicker({ category: dominant, files })
   }
 
-  const PageComponent = PAGES[activeCategory] || VideoPage
+  // Global drag & drop on window
+  useEffect(() => {
+    function onDragOver(e) { e.preventDefault(); setDragging(true) }
+    function onDragLeave(e) { if (!e.relatedTarget) setDragging(false) }
+    function onDrop(e) {
+      e.preventDefault()
+      setDragging(false)
+      const files = Array.from(e.dataTransfer.files)
+      if (files.length) handleFiles(files)
+    }
+    window.addEventListener('dragover', onDragOver)
+    window.addEventListener('dragleave', onDragLeave)
+    window.addEventListener('drop', onDrop)
+    return () => {
+      window.removeEventListener('dragover', onDragOver)
+      window.removeEventListener('dragleave', onDragLeave)
+      window.removeEventListener('drop', onDrop)
+    }
+  }, [])
 
   return (
-    // FF layout: sidebar | [header + main + queue]
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: '#ebebeb' }}>
-      <Sidebar />
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: '#ebebeb', position: 'relative' }}>
+      <Toolbar
+        onStart={processQueue}
+        onStop={handleStop}
+        onAddFiles={handleFiles}
+      />
 
-      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, overflow: 'hidden' }}>
-        <Header onStartAll={handleStartAll} onClearAll={handleClearAll} />
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+        <Sidebar />
 
-        {/* Main content area */}
-        <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-          <PageComponent />
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          {activeCategory === 'settings' ? (
+            <div style={{ flex: 1, overflow: 'auto' }}><SettingsPage /></div>
+          ) : (
+            <FormatGrid />
+          )}
+          <Queue onStart={processQueue} />
         </div>
-
-        {/* Queue panel at bottom - always visible */}
-        <ConversionQueue onStartAll={handleStartAll} />
       </div>
+
+      {/* Drag overlay */}
+      {dragging && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,102,204,0.15)',
+          border: '3px dashed #0066cc', zIndex: 800, display: 'flex',
+          alignItems: 'center', justifyContent: 'center', pointerEvents: 'none',
+        }}>
+          <div style={{
+            background: 'rgba(255,255,255,0.95)', borderRadius: 8, padding: '20px 40px',
+            fontSize: 16, fontWeight: 700, color: '#0066cc', boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+          }}>
+            📂 שחרר קבצים לפה
+          </div>
+        </div>
+      )}
+
+      {/* Format picker (after drop without specific format) */}
+      {formatPicker && (
+        <FormatPicker
+          category={formatPicker.category}
+          files={formatPicker.files}
+          onPick={(fmt) => {
+            openSetupWindow(fmt, formatPicker.category, formatPicker.files)
+            setFormatPicker(null)
+          }}
+          onCancel={() => setFormatPicker(null)}
+        />
+      )}
+
+      {/* Conversion setup window */}
+      <ConversionSetup />
     </div>
   )
 }
