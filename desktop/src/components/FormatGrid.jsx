@@ -99,15 +99,16 @@ function FormatTile({ fmt, meta, onClick }) {
       {/* Label */}
       <div style={{
         flex: 1,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
         padding: '2px 4px',
         background: hovered ? `${meta.color}10` : '#f8f9fc',
       }}>
+        <span style={{ fontSize: 8.5, color: hovered ? meta.color : '#888', marginBottom: 1 }}>המר ל-</span>
         <span style={{
           fontSize: 9.5, fontWeight: 700, color: hovered ? meta.color : '#1a2a4a',
           textAlign: 'center', lineHeight: 1.2,
           overflow: 'hidden', maxWidth: 82,
-          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+          display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical',
         }}>
           {fmt.label}
         </span>
