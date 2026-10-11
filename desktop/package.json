@@ -52,7 +52,6 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "language": "1037",
-      "installerLanguages": ["Hebrew"],
       "installerSidebar": null,
       "installerHeader": null,
       "runAfterFinish": true,
