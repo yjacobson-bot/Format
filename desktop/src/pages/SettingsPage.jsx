@@ -86,18 +86,6 @@ export default function SettingsPage() {
           ))}
         </div>
 
-        {/* About */}
-        <div style={{
-          background: '#f0f4ff', border: '1px solid #c7d2fe', borderRadius: 2, padding: 10,
-          borderLeft: '3px solid #1d4ed8',
-        }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#1d4ed8', marginBottom: 4 }}>אודות פורמט נקי</div>
-          <div style={{ fontSize: 11, color: '#3730a3', lineHeight: 1.6 }}>
-            ממיר מדיה קוד פתוח המופעל על ידי <strong>FFmpeg</strong>.<br />
-            תומך בהמרת קבצי וידאו, אודיו ותמונות לעשרות פורמטים.<br />
-            100% אופליין — ללא טלמטריה, ללא פרסומות, ללא העלאות לענן.
-          </div>
-        </div>
       </div>
     </div>
   )

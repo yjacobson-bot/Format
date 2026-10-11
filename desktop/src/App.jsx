@@ -170,15 +170,31 @@ export default function App() {
         if (settings.playSoundOnComplete) {
           try {
             const ctx = new AudioContext()
-            const osc = ctx.createOscillator()
-            const gain = ctx.createGain()
-            osc.connect(gain); gain.connect(ctx.destination)
-            osc.frequency.value = 880
-            gain.gain.setValueAtTime(0.3, ctx.currentTime)
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8)
-            osc.start(); osc.stop(ctx.currentTime + 0.8)
+            const t = ctx.currentTime
+            ;[
+              { freq: 660, start: 0,   dur: 0.18 },
+              { freq: 880, start: 0.2, dur: 0.18 },
+              { freq: 1100, start: 0.4, dur: 0.28 },
+            ].forEach(({ freq, start, dur }) => {
+              const osc = ctx.createOscillator()
+              const gain = ctx.createGain()
+              osc.connect(gain); gain.connect(ctx.destination)
+              osc.frequency.value = freq
+              gain.gain.setValueAtTime(0.25, t + start)
+              gain.gain.exponentialRampToValueAtTime(0.001, t + start + dur)
+              osc.start(t + start); osc.stop(t + start + dur)
+            })
           } catch {}
         }
+        try {
+          if (Notification.permission === 'granted') {
+            new Notification('פורמט נקי', { body: 'כל ההמרות הושלמו בהצלחה ✓', silent: true })
+          } else if (Notification.permission !== 'denied') {
+            Notification.requestPermission().then(p => {
+              if (p === 'granted') new Notification('פורמט נקי', { body: 'כל ההמרות הושלמו בהצלחה ✓', silent: true })
+            })
+          }
+        } catch {}
         if (settings.shutdownOnComplete) {
           window.electronAPI.shutdown()
         }
