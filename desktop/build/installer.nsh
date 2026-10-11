@@ -1,16 +1,26 @@
 ; Hebrew NSIS installer customization
 
 !macro customHeader
-!macroend
+  ; Override multiuser page strings to Hebrew (must be at global scope)
+  !ifdef MULTIUSER_TEXT_INSTALLMODE_TITLE
+    !undef MULTIUSER_TEXT_INSTALLMODE_TITLE
+  !endif
+  !define MULTIUSER_TEXT_INSTALLMODE_TITLE "אפשרויות התקנה"
 
-!macro customInit
-  ; Override multiuser page strings to Hebrew
-  LangString MULTIUSER_TEXT_INSTALLMODE_TITLE ${LANG_HEBREW} "אפשרויות התקנה"
-  LangString MULTIUSER_TEXT_INSTALLMODE_SUBTITLE ${LANG_HEBREW} "עבור מי להתקין את $(^Name)?"
-  LangString MULTIUSER_INSTALLMODE_ALLUSERS_TEXT ${LANG_HEBREW} "כל המשתמשים במחשב זה"
-  LangString MULTIUSER_INSTALLMODE_CURRENTUSER_TEXT ${LANG_HEBREW} "רק עבורי"
-  LangString MULTIUSER_INSTALLMODE_ALLUSERS_SUBTEXT ${LANG_HEBREW} "התקן עבור כולם (נדרשות הרשאות מנהל)"
-  LangString MULTIUSER_INSTALLMODE_CURRENTUSER_SUBTEXT ${LANG_HEBREW} "התקן רק למשתמש הנוכחי"
+  !ifdef MULTIUSER_TEXT_INSTALLMODE_SUBTITLE
+    !undef MULTIUSER_TEXT_INSTALLMODE_SUBTITLE
+  !endif
+  !define MULTIUSER_TEXT_INSTALLMODE_SUBTITLE "עבור מי להתקין את $(^Name)?"
+
+  !ifdef MULTIUSER_INSTALLMODE_ALLUSERS_TEXT
+    !undef MULTIUSER_INSTALLMODE_ALLUSERS_TEXT
+  !endif
+  !define MULTIUSER_INSTALLMODE_ALLUSERS_TEXT "כל המשתמשים במחשב זה"
+
+  !ifdef MULTIUSER_INSTALLMODE_CURRENTUSER_TEXT
+    !undef MULTIUSER_INSTALLMODE_CURRENTUSER_TEXT
+  !endif
+  !define MULTIUSER_INSTALLMODE_CURRENTUSER_TEXT "רק עבורי"
 !macroend
 
 !macro customInstall
