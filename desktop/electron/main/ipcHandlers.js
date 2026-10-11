@@ -1,0 +1,118 @@
+import { ipcMain, dialog, shell, app } from 'electron'
+import path from 'path'
+import fs from 'fs'
+import {
+  probeFile,
+  startConversion,
+  cancelConversion,
+  cancelAll,
+  buildOutputPath,
+  mergeVideos,
+  splitVideo,
+  addWatermark,
+} from './ffmpegService.js'
+
+export function registerHandlers(mainWindow) {
+  ipcMain.handle('dialog:openFiles', async (_, options) => {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      properties: ['openFile', 'multiSelections'],
+      ...options,
+    })
+    return result.canceled ? [] : result.filePaths
+  })
+
+  ipcMain.handle('dialog:openFolder', async () => {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      properties: ['openDirectory'],
+    })
+    return result.canceled ? null : result.filePaths[0]
+  })
+
+  ipcMain.handle('dialog:saveFile', async (_, options) => {
+    const result = await dialog.showSaveDialog(mainWindow, options)
+    return result.canceled ? null : result.filePath
+  })
+
+  ipcMain.handle('file:probe', async (_, filePath) => {
+    try {
+      const meta = await probeFile(filePath)
+      return { success: true, data: meta }
+    } catch (err) {
+      return { success: false, error: err.message }
+    }
+  })
+
+  ipcMain.handle('file:exists', (_, filePath) => fs.existsSync(filePath))
+
+  ipcMain.handle('file:open', (_, filePath) => shell.openPath(filePath))
+
+  ipcMain.handle('file:showInFolder', (_, filePath) => shell.showItemInFolder(filePath))
+
+  ipcMain.handle('file:buildOutputPath', (_, inputPath, outputDir, ext) => {
+    return buildOutputPath(inputPath, outputDir, ext)
+  })
+
+  ipcMain.handle('convert:start', (_, { taskId, inputPath, outputPath, settings, formatArgs }) => {
+    startConversion(
+      taskId,
+      inputPath,
+      outputPath,
+      settings,
+      formatArgs,
+      (id, percent) => mainWindow.webContents.send('convert:progress', { taskId: id, percent }),
+      (id) => mainWindow.webContents.send('convert:complete', { taskId: id }),
+      (id, error) => mainWindow.webContents.send('convert:error', { taskId: id, error }),
+    )
+    return { success: true }
+  })
+
+  ipcMain.handle('convert:cancel', (_, taskId) => {
+    cancelConversion(taskId)
+    return { success: true }
+  })
+
+  ipcMain.handle('convert:cancelAll', () => {
+    cancelAll()
+    return { success: true }
+  })
+
+  ipcMain.handle('tools:mergeVideos', async (_, { inputPaths, outputPath }) => {
+    try {
+      await mergeVideos(inputPaths, outputPath, (percent) => {
+        mainWindow.webContents.send('tools:mergeProgress', { percent })
+      })
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: err.message }
+    }
+  })
+
+  ipcMain.handle('tools:splitVideo', async (_, { inputPath, outputDir, segmentDuration }) => {
+    try {
+      await splitVideo(inputPath, outputDir, segmentDuration)
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: err.message }
+    }
+  })
+
+  ipcMain.handle('tools:addWatermark', async (_, { videoPath, watermarkPath, outputPath, position }) => {
+    try {
+      await addWatermark(videoPath, watermarkPath, outputPath, position)
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: err.message }
+    }
+  })
+
+  ipcMain.handle('app:getVersion', () => app.getVersion())
+
+  ipcMain.handle('app:getOutputDir', () => {
+    return path.join(app.getPath('videos'), 'FormatFactory')
+  })
+
+  ipcMain.handle('fs:ensureDir', (_, dirPath) => {
+    fs.mkdirSync(dirPath, { recursive: true })
+    return true
+  })
+}

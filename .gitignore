@@ -1,0 +1,31 @@
+node_modules/
+dist/
+out/
+.DS_Store
+*.log
+.env
+.env.local
+
+# Desktop
+desktop/node_modules/
+desktop/dist/
+desktop/out/
+desktop/.vite/
+
+# Mobile
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/build/
+mobile/android/.gradle/
+mobile/android/local.properties
+mobile/android/app/debug/
+mobile/android/app/profile/
+mobile/android/app/release/
+mobile/*.lock
+mobile/pubspec.lock
+
+# IDEs
+.idea/
+.vscode/
+*.iml
