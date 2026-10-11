@@ -24,9 +24,7 @@ jobs:
         run: npm install
 
       - name: Build Windows EXE
-        run: npm run build:win -- --publish never
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run build:win
 
       - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
@@ -36,7 +34,7 @@ jobs:
           retention-days: 30
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v1
         with:
           tag_name: v1.0.0
           name: Format Factory v1.0.0
@@ -46,16 +44,16 @@ jobs:
           body: |
             ## Format Factory Clone — Windows Installer
 
-            ### Download
-            Click the `.exe` file below to download and install.
+            ### הורדה
+            לחץ על קובץ ה-`.exe` למטה כדי להוריד ולהתקין.
 
-            ### Features
-            - 🎬 Video conversion — MP4, AVI, MKV, MOV, WMV, FLV, WebM, H.265 and more
-            - 🎵 Audio conversion — MP3, AAC, WAV, FLAC, OGG, WMA, OPUS and more
-            - 🖼️ Image conversion — JPG, PNG, BMP, GIF, WebP, TIFF, ICO
-            - 📀 DVD / ISO ripping
-            - 🔧 Tools — merge, split, watermark
-            - ✅ 100% offline — FFmpeg is bundled, no internet required
-            - 🔒 No telemetry, no ads, no cloud uploads
+            ### אפשרויות
+            - 🎬 המרת וידאו — MP4, AVI, MKV, MOV, WMV, FLV, WebM, H.265 ועוד
+            - 🎵 המרת אודיו — MP3, AAC, WAV, FLAC, OGG, WMA, OPUS ועוד
+            - 🖼️ המרת תמונות — JPG, PNG, BMP, GIF, WebP, TIFF, ICO
+            - 📀 DVD / ISO
+            - 🔧 כלים — מיזוג, פיצול, watermark
+            - ✅ 100% אופליין — FFmpeg מובנה, ללא אינטרנט
+            - 🔒 ללא טלמטריה, ללא פרסומות
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

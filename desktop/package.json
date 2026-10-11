@@ -2,6 +2,7 @@
   "name": "format-factory",
   "version": "1.0.0",
   "description": "Free open-source multimedia converter",
+  "author": "Format Factory Contributors",
   "main": "out/main/index.js",
   "repository": {
     "type": "git",
@@ -10,9 +11,8 @@
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
-    "package": "npm run build && electron-builder",
-    "build:win": "npm run build && electron-builder --win",
-    "package:win": "npm run build && electron-builder --win"
+    "build:win": "electron-vite build && electron-builder --win --publish never",
+    "package:win": "electron-vite build && electron-builder --win --publish never"
   },
   "dependencies": {
     "fluent-ffmpeg": "^2.1.2",
@@ -36,6 +36,7 @@
     "appId": "com.openformatfactory.app",
     "productName": "Format Factory",
     "directories": { "output": "dist" },
+    "files": ["out/**/*", "!node_modules/.cache"],
     "win": {
       "target": [{ "target": "nsis", "arch": ["x64"] }],
       "icon": "resources/icon.ico",
@@ -44,15 +45,8 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true
-    },
-    "mac": {
-      "target": "dmg",
-      "icon": "resources/icon.icns"
-    },
-    "linux": {
-      "target": "AppImage"
-    },
-    "files": ["out/**/*", "!node_modules/.cache"]
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
   }
 }
