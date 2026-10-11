@@ -13,7 +13,16 @@ export default function SettingsPage() {
   const [availableHW, setAvailableHW] = useState([])
 
   useEffect(() => {
-    window.electronAPI?.detectHardwareEncoders?.().then(hw => setAvailableHW(hw || [])).catch(() => {})
+    window.electronAPI?.detectHardwareEncoders?.().then(hw => {
+      const list = hw || []
+      setAvailableHW(list)
+      // Auto-select best GPU if none chosen yet
+      if (list.length > 0 && !settings.defaultHwAccel) {
+        const priority = ['nvenc', 'amf', 'qsv']
+        const best = priority.find(p => list.includes(p))
+        if (best) updateSettings({ defaultHwAccel: best })
+      }
+    }).catch(() => {})
   }, [])
 
   return (
