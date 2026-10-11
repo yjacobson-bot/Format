@@ -77,13 +77,10 @@ export default function FormatGrid() {
               e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.08)'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <span style={{ color: '#0066cc', fontWeight: 700, fontSize: 14 }}>→</span>
-              <span style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a', letterSpacing: 0.5 }}>
-                {fmt.label}
-              </span>
-            </div>
-            <span style={{ fontSize: 9, color: '#888' }}>.{fmt.ext}</span>
+            <span style={{ fontSize: 10, color: '#0066cc', fontWeight: 600 }}>המר ל-</span>
+            <span style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a', letterSpacing: 0.5 }}>
+              {fmt.label}
+            </span>
           </button>
         ))}
       </div>
