@@ -108,8 +108,11 @@ export function buildFFmpegCommand(inputPath, outputPath, settings, formatArgs) 
     cmd = cmd.outputOptions(['-preset', 'fast'])
   }
 
-  // Let FFmpeg use all available CPU threads
-  cmd = cmd.outputOptions(['-threads', '0'])
+  // Allocate threads proportionally: each job gets cores / concurrentJobs
+  const totalCores = require('os').cpus().length
+  const activeCount = Math.max(1, activeJobs.size)
+  const threadsPerJob = Math.max(1, Math.floor(totalCores / activeCount))
+  cmd = cmd.outputOptions(['-threads', String(threadsPerJob)])
 
   if (settings.subtitleFile && fs.existsSync(settings.subtitleFile)) {
     cmd = cmd.outputOptions(['-vf', `subtitles=${settings.subtitleFile.replace(/\\/g, '/')}`])
