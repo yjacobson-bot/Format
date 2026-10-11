@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "Free open-source multimedia converter",
   "main": "out/main/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yjacobson-bot/Format.git"
+  },
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
