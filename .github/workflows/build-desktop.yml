@@ -5,6 +5,9 @@ on:
     branches: [claude/lucid-shannon-6ask8a, main]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-windows:
     runs-on: windows-latest
@@ -29,9 +32,9 @@ jobs:
       - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Format-Factory-Windows
+          name: Format-Factory-Windows-EXE
           path: desktop/dist/*.exe
-          retention-days: 30
+          retention-days: 90
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
@@ -42,18 +45,12 @@ jobs:
           prerelease: false
           files: desktop/dist/*.exe
           body: |
-            ## Format Factory Clone — Windows Installer
+            ## Format Factory — Windows Installer
 
-            ### הורדה
-            לחץ על קובץ ה-`.exe` למטה כדי להוריד ולהתקין.
+            הורד את קובץ ה-`.exe` למטה והתקן.
 
-            ### אפשרויות
-            - 🎬 המרת וידאו — MP4, AVI, MKV, MOV, WMV, FLV, WebM, H.265 ועוד
-            - 🎵 המרת אודיו — MP3, AAC, WAV, FLAC, OGG, WMA, OPUS ועוד
-            - 🖼️ המרת תמונות — JPG, PNG, BMP, GIF, WebP, TIFF, ICO
-            - 📀 DVD / ISO
-            - 🔧 כלים — מיזוג, פיצול, watermark
-            - ✅ 100% אופליין — FFmpeg מובנה, ללא אינטרנט
-            - 🔒 ללא טלמטריה, ללא פרסומות
+            - 🎬 המרת וידאו, 🎵 אודיו, 🖼️ תמונות, 📀 DVD/ISO
+            - ✅ 100% אופליין — FFmpeg מובנה
+            - 🔒 ללא טלמטריה
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
