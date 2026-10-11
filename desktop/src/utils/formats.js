@@ -65,7 +65,7 @@ export const VIDEO_FORMATS = [
     ffmpegArgs: ['-c:v', 'libx265', '-c:a', 'aac'],
   },
   {
-    id: 'gif_video', label: 'GIF (from video)', ext: 'gif', icon: '🖼️',
+    id: 'gif_video', label: 'GIF מוידאו', ext: 'gif', icon: '🖼️',
     description: 'Animated GIF from video',
     ffmpegArgs: ['-vf', 'fps=10,scale=480:-1:flags=lanczos', '-loop', '0'],
     audioDisabled: true,
