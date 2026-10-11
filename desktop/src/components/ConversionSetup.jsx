@@ -448,14 +448,20 @@ export default function ConversionSetup() {
   const { setupWindow, closeSetupWindow, updateSetupSettings, updateSetupFiles, addTasks, settings } = useStore()
   const [probedInfo, setProbedInfo] = useState({}) // path → { duration, resolution, codec, audioCodec }
 
+  // Auto-probe newly added files — must be before any early return
+  const files = setupWindow?.files ?? []
+  useEffect(() => {
+    files.forEach(f => { if (!probedInfo[f.path]) probeAllFiles(f) })
+  }, [files]) // eslint-disable-line react-hooks/exhaustive-deps
+
   if (!setupWindow) return null
-  const { targetFormat, category, files, convSettings } = setupWindow
+  const { targetFormat, category, convSettings } = setupWindow
 
   // Preview file for trim: first file in list
   const previewFile = files[0]
   const previewDuration = previewFile ? (probedInfo[previewFile.path]?.duration ?? null) : null
 
-  async function probeFile(file) {
+  async function probeAllFiles(file) {
     if (probedInfo[file.path]) return
     try {
       const meta = await window.electronAPI?.probeFile(file.path)
@@ -480,7 +486,7 @@ export default function ConversionSetup() {
     if (picked?.length) {
       const newFiles = [...files, ...picked]
       updateSetupFiles(newFiles)
-      picked.forEach(f => probeFile(f))
+      picked.forEach(f => probeAllFiles(f))
     }
   }
 
@@ -488,13 +494,8 @@ export default function ConversionSetup() {
     e.preventDefault()
     const dropped = Array.from(e.dataTransfer.files).map(f => ({ name: f.name, path: f.path, size: f.size }))
     updateSetupFiles([...files, ...dropped])
-    dropped.forEach(f => probeFile(f))
+    dropped.forEach(f => probeAllFiles(f))
   }
-
-  // Auto-probe newly added files
-  useEffect(() => {
-    files.forEach(f => { if (!probedInfo[f.path]) probeFile(f) })
-  }, [files])
 
   function handleOk() {
     if (!files.length) return
