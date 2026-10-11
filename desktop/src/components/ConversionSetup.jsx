@@ -484,9 +484,12 @@ export default function ConversionSetup() {
   async function handleAddFiles() {
     const picked = await window.electronAPI?.openFiles({ multiple: true })
     if (picked?.length) {
-      const newFiles = [...files, ...picked]
-      updateSetupFiles(newFiles)
-      picked.forEach(f => probeAllFiles(f))
+      const asObjs = picked.map(p => {
+        const name = p.replace(/\\/g, '/').split('/').pop()
+        return { name, path: p, size: 0 }
+      })
+      updateSetupFiles([...files, ...asObjs])
+      asObjs.forEach(f => probeAllFiles(f))
     }
   }
 
