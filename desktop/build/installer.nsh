@@ -1,26 +1,6 @@
 ; Hebrew NSIS installer customization
 
 !macro customHeader
-  ; Override multiuser page strings to Hebrew (must be at global scope)
-  !ifdef MULTIUSER_TEXT_INSTALLMODE_TITLE
-    !undef MULTIUSER_TEXT_INSTALLMODE_TITLE
-  !endif
-  !define MULTIUSER_TEXT_INSTALLMODE_TITLE "אפשרויות התקנה"
-
-  !ifdef MULTIUSER_TEXT_INSTALLMODE_SUBTITLE
-    !undef MULTIUSER_TEXT_INSTALLMODE_SUBTITLE
-  !endif
-  !define MULTIUSER_TEXT_INSTALLMODE_SUBTITLE "עבור מי להתקין את $(^Name)?"
-
-  !ifdef MULTIUSER_INSTALLMODE_ALLUSERS_TEXT
-    !undef MULTIUSER_INSTALLMODE_ALLUSERS_TEXT
-  !endif
-  !define MULTIUSER_INSTALLMODE_ALLUSERS_TEXT "כל המשתמשים במחשב זה"
-
-  !ifdef MULTIUSER_INSTALLMODE_CURRENTUSER_TEXT
-    !undef MULTIUSER_INSTALLMODE_CURRENTUSER_TEXT
-  !endif
-  !define MULTIUSER_INSTALLMODE_CURRENTUSER_TEXT "רק עבורי"
 !macroend
 
 !macro customInstall
