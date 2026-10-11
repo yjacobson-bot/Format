@@ -1,0 +1,63 @@
+name: Build Desktop EXE
+
+on:
+  push:
+    branches: [claude/lucid-shannon-6ask8a, main]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: desktop
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: desktop/package-lock.json
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build Windows EXE
+        run: npm run build:win
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload EXE artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Format-Factory-Windows
+          path: desktop/dist/*.exe
+          retention-days: 30
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.0
+          name: Format Factory v1.0.0
+          draft: false
+          prerelease: false
+          files: desktop/dist/*.exe
+          body: |
+            ## Format Factory Clone — Windows Installer
+
+            ### Download
+            Click the `.exe` file below to download and install.
+
+            ### Features
+            - 🎬 Video conversion — MP4, AVI, MKV, MOV, WMV, FLV, WebM, H.265 and more
+            - 🎵 Audio conversion — MP3, AAC, WAV, FLAC, OGG, WMA, OPUS and more
+            - 🖼️ Image conversion — JPG, PNG, BMP, GIF, WebP, TIFF, ICO
+            - 📀 DVD / ISO ripping
+            - 🔧 Tools — merge, split, watermark
+            - ✅ 100% offline — FFmpeg is bundled, no internet required
+            - 🔒 No telemetry, no ads, no cloud uploads
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
