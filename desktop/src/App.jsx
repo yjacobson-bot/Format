@@ -156,6 +156,11 @@ export default function App() {
 
   const [formatPicker, setFormatPicker] = useState(null)
   const [dragging, setDragging] = useState(false)
+  const [availableHW, setAvailableHW] = useState([])
+
+  useEffect(() => {
+    window.electronAPI?.detectHardwareEncoders?.().then(hw => setAvailableHW(hw || [])).catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (!window.electronAPI) return
@@ -353,7 +358,7 @@ export default function App() {
         />
       )}
 
-      <ConversionSetup />
+      <ConversionSetup availableHW={availableHW} />
       <JoinWindow />
     </div>
     </ErrorBoundary>

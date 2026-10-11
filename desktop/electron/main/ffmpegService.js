@@ -3,6 +3,7 @@ import ffmpegInstaller from '@ffmpeg-installer/ffmpeg'
 import ffprobeInstaller from '@ffprobe-installer/ffprobe'
 import path from 'path'
 import fs from 'fs'
+import { spawnSync } from 'child_process'
 
 function unpackedPath(p) {
   return p.replace('app.asar', 'app.asar.unpacked')
@@ -12,6 +13,37 @@ ffmpeg.setFfmpegPath(unpackedPath(ffmpegInstaller.path))
 ffmpeg.setFfprobePath(unpackedPath(ffprobeInstaller.path))
 
 const activeJobs = new Map()
+
+// GPU encoder map: hwAccel → { h264, h265 }
+const HW_CODECS = {
+  nvenc: { h264: 'h264_nvenc', h265: 'hevc_nvenc' },
+  qsv:   { h264: 'h264_qsv',  h265: 'hevc_qsv'  },
+  amf:   { h264: 'h264_amf',  h265: 'hevc_amf'  },
+}
+
+export function detectHardwareEncoders() {
+  try {
+    const result = spawnSync(unpackedPath(ffmpegInstaller.path), ['-hide_banner', '-encoders'], { encoding: 'utf8', timeout: 5000 })
+    const out = (result.stdout || '') + (result.stderr || '')
+    const available = []
+    if (out.includes('h264_nvenc')) available.push('nvenc')
+    if (out.includes('h264_qsv'))   available.push('qsv')
+    if (out.includes('h264_amf'))   available.push('amf')
+    return available
+  } catch {
+    return []
+  }
+}
+
+function resolveVideoCodec(settings) {
+  if (settings.videoCodec) return settings.videoCodec // user set explicit codec
+  const hw = settings.hwAccel
+  if (!hw || hw === 'cpu') return null
+  const codecs = HW_CODECS[hw]
+  if (!codecs) return null
+  // pick h265 or h264 based on container hint (default h264)
+  return codecs.h264
+}
 
 export async function probeFile(filePath) {
   return new Promise((resolve, reject) => {
@@ -52,7 +84,8 @@ export function buildFFmpegCommand(inputPath, outputPath, settings, formatArgs) 
     cmd = cmd.videoFilters(vfFilters)
   }
 
-  if (settings.videoCodec) cmd = cmd.videoCodec(settings.videoCodec)
+  const resolvedVideoCodec = resolveVideoCodec(settings)
+  if (resolvedVideoCodec) cmd = cmd.videoCodec(resolvedVideoCodec)
   if (settings.audioCodec) cmd = cmd.audioCodec(settings.audioCodec)
   if (settings.videoBitrate) cmd = cmd.videoBitrate(settings.videoBitrate)
   if (settings.audioBitrate) cmd = cmd.audioBitrate(settings.audioBitrate)
@@ -124,53 +157,65 @@ function parseProgressLine(line, totalDuration) {
   return { percent, currentSec, totalDuration, speed, bitrate, size, remainingSec }
 }
 
+const GPU_ERROR_PATTERNS = ['No such encoder', 'Unknown encoder', 'cannot open video encoder', 'GPU', 'nvenc', 'qsv', 'amf', 'Error initializing output stream']
+
+function isGpuError(msg) {
+  return GPU_ERROR_PATTERNS.some(p => msg.toLowerCase().includes(p.toLowerCase()))
+}
+
+function runCmd(taskId, cmd, totalDuration, onProgress, onComplete, onError, fallbackFn) {
+  let lastProgressTime = 0
+
+  cmd.on('stderr', (line) => {
+    const progress = parseProgressLine(line, totalDuration)
+    if (progress) {
+      const now = Date.now()
+      if (now - lastProgressTime < 250) return
+      lastProgressTime = now
+      onProgress(taskId, Math.round(progress.percent), {
+        speed: progress.speed,
+        remainingSec: progress.remainingSec,
+        bitrate: progress.bitrate,
+        currentSec: progress.currentSec,
+        totalDuration,
+      })
+    }
+  })
+
+  cmd.on('end', () => {
+    activeJobs.delete(taskId)
+    onComplete(taskId)
+  })
+
+  cmd.on('error', (err) => {
+    activeJobs.delete(taskId)
+    if (fallbackFn && isGpuError(err.message)) {
+      fallbackFn()
+    } else {
+      onError(taskId, err.message)
+    }
+  })
+
+  cmd.run()
+  activeJobs.set(taskId, cmd)
+}
+
 export function startConversion(taskId, inputPath, outputPath, settings, formatArgs, onProgress, onComplete, onError) {
+  const useGpu = settings.hwAccel && settings.hwAccel !== 'cpu'
   const cmd = buildFFmpegCommand(inputPath, outputPath, settings, formatArgs)
+
+  const fallbackToCpu = () => {
+    const cpuSettings = { ...settings, hwAccel: 'cpu' }
+    const cpuCmd = buildFFmpegCommand(inputPath, outputPath, cpuSettings, formatArgs)
+    runCmd(taskId, cpuCmd, 0, onProgress, onComplete, onError, null)
+  }
 
   // Get duration for accurate progress
   probeFile(inputPath).then(meta => {
     const totalDuration = meta?.format?.duration || 0
-
-    // Throttle progress updates to max 4/sec per task to avoid IPC overload
-    let lastProgressTime = 0
-
-    cmd.on('stderr', (line) => {
-      const progress = parseProgressLine(line, totalDuration)
-      if (progress) {
-        const now = Date.now()
-        if (now - lastProgressTime < 250) return
-        lastProgressTime = now
-        onProgress(taskId, Math.round(progress.percent), {
-          speed: progress.speed,
-          remainingSec: progress.remainingSec,
-          bitrate: progress.bitrate,
-          currentSec: progress.currentSec,
-          totalDuration,
-        })
-      }
-    })
-
-    cmd.on('end', () => {
-      activeJobs.delete(taskId)
-      onComplete(taskId)
-    })
-
-    cmd.on('error', (err) => {
-      activeJobs.delete(taskId)
-      onError(taskId, err.message)
-    })
-
-    cmd.run()
-    activeJobs.set(taskId, cmd)
+    runCmd(taskId, cmd, totalDuration, onProgress, onComplete, onError, useGpu ? fallbackToCpu : null)
   }).catch(() => {
-    // Fallback: run without duration info
-    cmd.on('progress', (progress) => {
-      onProgress(taskId, Math.round(progress.percent || 0), {})
-    })
-    cmd.on('end', () => { activeJobs.delete(taskId); onComplete(taskId) })
-    cmd.on('error', (err) => { activeJobs.delete(taskId); onError(taskId, err.message) })
-    cmd.run()
-    activeJobs.set(taskId, cmd)
+    runCmd(taskId, cmd, 0, onProgress, onComplete, onError, useGpu ? fallbackToCpu : null)
   })
 }
 

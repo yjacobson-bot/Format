@@ -267,7 +267,14 @@ function AudioSettings({ settings, onChange, filePath, duration, category }) {
   )
 }
 
-function VideoSettings({ settings, onChange, filePath, duration }) {
+const HW_ACCEL_OPTIONS = [
+  { value: null,    label: 'CPU בלבד (ברירת מחדל)' },
+  { value: 'nvenc', label: '⚡ NVIDIA NVENC' },
+  { value: 'qsv',   label: '⚡ Intel QuickSync' },
+  { value: 'amf',   label: '⚡ AMD AMF' },
+]
+
+function VideoSettings({ settings, onChange, filePath, duration, availableHW }) {
   const s = settings || {}
   const [tab, setTab] = useState('video')
   const tabs = [
@@ -298,6 +305,21 @@ function VideoSettings({ settings, onChange, filePath, duration }) {
           <Sel label="קודק וידאו" value={s.videoCodec} onChange={v => onChange({ ...s, videoCodec: v })} options={VIDEO_CODECS} />
           <Sel label="קצב סיביות" value={s.videoBitrate} onChange={v => onChange({ ...s, videoBitrate: v })} options={VIDEO_BITRATES} />
           <Sel label="קצב פריימים" value={s.fps} onChange={v => onChange({ ...s, fps: v })} options={FRAMERATES} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <label style={{ fontSize: 10, color: '#555' }}>האצת חומרה (GPU)</label>
+            <select value={s.hwAccel ?? ''} onChange={e => onChange({ ...s, hwAccel: e.target.value || null })}
+              style={{ fontSize: 11, padding: '2px 4px', border: '1px solid #bbb', borderRadius: 2, background: '#fff', minWidth: 160 }}>
+              {HW_ACCEL_OPTIONS.map(o => {
+                const isAvailable = !o.value || availableHW?.includes(o.value)
+                return (
+                  <option key={String(o.value)} value={o.value ?? ''} disabled={o.value && !isAvailable}>
+                    {o.label}{o.value && !isAvailable ? ' (לא זמין)' : ''}
+                  </option>
+                )
+              })}
+            </select>
+            {s.hwAccel && <span style={{ fontSize: 9, color: '#0a7', marginTop: 1 }}>⚡ מהיר פי 5–20, fallback אוטומטי ל-CPU</span>}
+          </div>
         </div>
       )}
 
@@ -444,7 +466,7 @@ function ImageSettings({ settings, onChange }) {
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
-export default function ConversionSetup() {
+export default function ConversionSetup({ availableHW = [] }) {
   const { setupWindow, closeSetupWindow, updateSetupSettings, updateSetupFiles, addTasks, settings } = useStore()
   const [probedInfo, setProbedInfo] = useState({}) // path → { duration, resolution, codec, audioCodec }
 
@@ -629,6 +651,7 @@ export default function ConversionSetup() {
                 onChange={updateSetupSettings}
                 filePath={previewFile?.path}
                 duration={previewDuration}
+                availableHW={availableHW}
               />
             )}
             {category === 'audio' && (

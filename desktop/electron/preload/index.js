@@ -21,6 +21,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   splitVideo: (params) => ipcRenderer.invoke('tools:splitVideo', params),
   addWatermark: (params) => ipcRenderer.invoke('tools:addWatermark', params),
 
+  detectHardwareEncoders: () => ipcRenderer.invoke('ffmpeg:detectHW'),
   getVersion: () => ipcRenderer.invoke('app:getVersion'),
   getDefaultOutputDir: () => ipcRenderer.invoke('app:getOutputDir'),
   ensureDir: (dirPath) => ipcRenderer.invoke('fs:ensureDir', dirPath),

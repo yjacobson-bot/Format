@@ -12,6 +12,7 @@ import {
   splitVideo,
   addWatermark,
   scanDirectory,
+  detectHardwareEncoders,
 } from './ffmpegService.js'
 
 export function registerHandlers(mainWindow) {
@@ -121,6 +122,8 @@ export function registerHandlers(mainWindow) {
       return { success: false, error: err.message }
     }
   })
+
+  ipcMain.handle('ffmpeg:detectHW', () => detectHardwareEncoders())
 
   ipcMain.handle('app:getVersion', () => app.getVersion())
 
