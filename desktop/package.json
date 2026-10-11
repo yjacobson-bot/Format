@@ -52,6 +52,8 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "language": "1037",
+      "multiLanguageInstaller": false,
+      "include": "build/installer.nsh",
       "installerSidebar": null,
       "installerHeader": null,
       "runAfterFinish": true,
