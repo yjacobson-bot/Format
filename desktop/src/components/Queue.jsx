@@ -16,7 +16,13 @@ const STATUS_LABELS = {
 }
 
 export default function Queue({ onStart }) {
-  const { tasks, removeTask, clearCompleted, clearAll } = useStore()
+  const { tasks, removeTask, clearCompleted, clearAll, openSetupWindow } = useStore()
+
+  function reEditTask(task) {
+    if (task.status === 'running') return
+    const files = [{ name: task.fileName, path: task.inputPath, size: task.fileSize }]
+    openSetupWindow(task.outputFormat, task.category || 'video', files)
+  }
 
   return (
     <div style={{
@@ -73,7 +79,11 @@ export default function Queue({ onStart }) {
               {tasks.map((task, i) => {
                 const st = STATUS_LABELS[task.status] || STATUS_LABELS.pending
                 return (
-                  <tr key={task.id} style={{ borderBottom: '1px solid #f0f0f0', background: i % 2 === 0 ? '#fff' : '#fafafa' }}>
+                  <tr key={task.id}
+                    onDoubleClick={() => reEditTask(task)}
+                    style={{ borderBottom: '1px solid #f0f0f0', background: i % 2 === 0 ? '#fff' : '#fafafa', cursor: task.status !== 'running' ? 'pointer' : 'default' }}
+                    title={task.status !== 'running' ? 'לחץ פעמיים לעריכת הגדרות' : undefined}
+                  >
                     <td style={{ padding: '3px 8px', color: '#333', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 0 }}>
                       <span title={task.inputPath}>{task.fileName}</span>
                     </td>

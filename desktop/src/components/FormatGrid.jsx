@@ -33,7 +33,7 @@ const CATEGORY_LABELS = {
 }
 
 export default function FormatGrid() {
-  const { activeCategory, openSetupWindow } = useStore()
+  const { activeCategory, openSetupWindow, openJoinWindow } = useStore()
 
   if (activeCategory === 'settings') return null
 
@@ -57,7 +57,7 @@ export default function FormatGrid() {
         {formats.map(fmt => (
           <button
             key={fmt.id}
-            onClick={() => openSetupWindow(fmt, activeCategory)}
+            onClick={() => fmt.id === 'merge' ? openJoinWindow() : openSetupWindow(fmt, activeCategory)}
             style={{
               width: 110, height: 62,
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',

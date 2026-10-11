@@ -379,6 +379,28 @@ function VideoSettings({ settings, onChange, filePath, duration }) {
               </button>
             </div>
           </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <label style={{ fontSize: 10, color: '#555' }}>לוגו / ווטרמארק</label>
+            <div style={{ display: 'flex', gap: 4 }}>
+              <input value={s.watermarkFile || ''} readOnly placeholder="בחר תמונה..."
+                style={{ fontSize: 10, padding: '2px 4px', border: '1px solid #bbb', borderRadius: 2, width: 120 }} />
+              <button onClick={async () => {
+                const f = await window.electronAPI?.openFiles({ multiple: false })
+                if (f?.[0]) onChange({ ...s, watermarkFile: f[0].path })
+              }} style={{ fontSize: 10, padding: '1px 6px', cursor: 'pointer', background: '#f0f0f0', border: '1px solid #bbb', borderRadius: 2 }}>📂</button>
+              {s.watermarkFile && <button onClick={() => onChange({ ...s, watermarkFile: null })} style={{ fontSize: 10, padding: '1px 6px', cursor: 'pointer', background: '#f0f0f0', border: '1px solid #bbb', borderRadius: 2 }}>✕</button>}
+            </div>
+            {s.watermarkFile && (
+              <select value={s.watermarkPosition || 'bottomright'} onChange={e => onChange({ ...s, watermarkPosition: e.target.value })}
+                style={{ fontSize: 10, padding: '2px 4px', border: '1px solid #bbb', borderRadius: 2, background: '#fff', marginTop: 2 }}>
+                <option value="topleft">שמאל עליון</option>
+                <option value="topright">ימין עליון</option>
+                <option value="bottomleft">שמאל תחתון</option>
+                <option value="bottomright">ימין תחתון</option>
+                <option value="center">מרכז</option>
+              </select>
+            )}
+          </div>
           <label style={{ display: 'flex', gap: 5, alignItems: 'center', fontSize: 11, marginTop: 12 }}>
             <input type="checkbox" checked={!!s.grayscale} onChange={e => onChange({ ...s, grayscale: e.target.checked })} />
             גווני אפור
@@ -447,7 +469,7 @@ export default function ConversionSetup() {
           resolution: videoStream ? `${videoStream.width}×${videoStream.height}` : null,
           codec: videoStream?.codec_name || null,
           audioCodec: audioStream?.codec_name || null,
-          fps: videoStream?.r_frame_rate ? eval(videoStream.r_frame_rate).toFixed(0) : null,
+          fps: videoStream?.r_frame_rate ? (() => { const [n, d] = videoStream.r_frame_rate.split('/'); return d ? (Number(n) / Number(d)).toFixed(0) : Number(n).toFixed(0) })() : null,
         }
       }))
     } catch {}
@@ -476,7 +498,7 @@ export default function ConversionSetup() {
 
   function handleOk() {
     if (!files.length) return
-    addTasks(files, targetFormat, convSettings)
+    addTasks(files, targetFormat, convSettings, category)
     closeSetupWindow()
   }
 

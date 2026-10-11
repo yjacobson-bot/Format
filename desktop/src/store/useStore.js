@@ -16,6 +16,7 @@ export const useStore = create((set, get) => ({
 
   // The "Convert to X" setup window state
   setupWindow: null, // { targetFormat, category, files: [], convSettings: {} }
+  joinWindow: null,  // { files: [], settings: {} }
 
   setActiveCategory: (cat) => set({ activeCategory: cat }),
 
@@ -37,10 +38,15 @@ export const useStore = create((set, get) => ({
 
   closeSetupWindow: () => set({ setupWindow: null }),
 
+  openJoinWindow: (files = []) => set({ joinWindow: { files, settings: { videoCodec: 'libx264', audioBitrate: '192k' } } }),
+  updateJoinFiles: (files) => set(state => ({ joinWindow: state.joinWindow ? { ...state.joinWindow, files } : null })),
+  updateJoinSettings: (settings) => set(state => ({ joinWindow: state.joinWindow ? { ...state.joinWindow, settings } : null })),
+  closeJoinWindow: () => set({ joinWindow: null }),
+
   setOutputDir: (dir) => set(state => ({ settings: { ...state.settings, outputDir: dir } })),
   updateSettings: (updates) => set(state => ({ settings: { ...state.settings, ...updates } })),
 
-  addTasks: (files, outputFormat, conversionSettings) => {
+  addTasks: (files, outputFormat, conversionSettings, category) => {
     const newTasks = files.map(file => ({
       id: genId(),
       inputPath: file.path,
@@ -49,6 +55,7 @@ export const useStore = create((set, get) => ({
       outputFormat,
       outputPath: null,
       settings: conversionSettings || {},
+      category: category || null,
       status: 'pending',
       progress: 0,
       error: null,
@@ -57,6 +64,26 @@ export const useStore = create((set, get) => ({
     }))
     set(state => ({ tasks: [...state.tasks, ...newTasks] }))
     return newTasks
+  },
+
+  addJoinTask: (files, outputExt, settings) => {
+    const task = {
+      id: genId(),
+      inputPath: files[0]?.path || '',
+      fileName: `מיזוג ${files.length} קבצים.${outputExt}`,
+      fileSize: files.reduce((s, f) => s + (f.size || 0), 0),
+      outputFormat: { id: 'merge', label: 'מיזוג', ext: outputExt, ffmpegArgs: [] },
+      outputPath: null,
+      settings: { ...settings, joinFiles: files.map(f => f.path) },
+      category: 'video',
+      status: 'pending',
+      progress: 0,
+      error: null,
+      startedAt: null,
+      completedAt: null,
+    }
+    set(state => ({ tasks: [...state.tasks, task] }))
+    return task
   },
 
   removeTask: (taskId) => set(state => ({ tasks: state.tasks.filter(t => t.id !== taskId) })),

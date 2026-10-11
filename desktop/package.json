@@ -55,7 +55,6 @@
       "installerLanguages": ["Hebrew"],
       "installerSidebar": null,
       "installerHeader": null,
-      "welcomeTitle": "ברוך הבא להתקנת פורמט נקי",
       "runAfterFinish": true,
       "shortcutName": "פורמט נקי"
     }

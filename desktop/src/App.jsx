@@ -5,6 +5,7 @@ import Sidebar from './components/Sidebar'
 import FormatGrid from './components/FormatGrid'
 import Queue from './components/Queue'
 import ConversionSetup from './components/ConversionSetup'
+import JoinWindow from './components/JoinWindow'
 import SettingsPage from './pages/SettingsPage'
 import {
   VIDEO_INPUT_EXTENSIONS, AUDIO_INPUT_EXTENSIONS, IMAGE_INPUT_EXTENSIONS,
@@ -228,6 +229,9 @@ export default function App() {
 
       {/* Conversion setup window */}
       <ConversionSetup />
+
+      {/* Join window */}
+      <JoinWindow />
     </div>
   )
 }
