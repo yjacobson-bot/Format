@@ -214,6 +214,21 @@ export default function App() {
     return window.electronAPI.onMenuAction('clearQueue', clearAll)
   }, [clearAll])
 
+  const [closeConfirmVisible, setCloseConfirmVisible] = useState(false)
+
+  useEffect(() => {
+    if (!window.electronAPI?.onCheckClose) return
+    return window.electronAPI.onCheckClose(() => {
+      const { tasks } = useStore.getState()
+      const active = tasks.filter(t => t.status === 'pending' || t.status === 'running')
+      if (active.length === 0) {
+        window.electronAPI.confirmClose()
+      } else {
+        setCloseConfirmVisible(true)
+      }
+    })
+  }, [])
+
   const runTask = useCallback(async (task) => {
     try {
       const outputPath = await window.electronAPI?.buildOutputPath(
@@ -239,6 +254,7 @@ export default function App() {
   }, [settings.outputDir, setTaskRunning, setTaskError])
 
   const processQueue = useCallback(async () => {
+    if (useStore.getState().paused) return
     const running = getRunningTasks()
     const pending = getPendingTasks()
     const slots = (settings.maxConcurrent || 2) - running.length
@@ -360,6 +376,47 @@ export default function App() {
 
       <ConversionSetup availableHW={availableHW} />
       <JoinWindow />
+
+      {closeConfirmVisible && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)',
+          zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div style={{
+            background: '#fff', borderRadius: 6, padding: '24px 32px', maxWidth: 380,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.35)', textAlign: 'center', direction: 'rtl',
+            fontFamily: 'Segoe UI, Arial, sans-serif',
+          }}>
+            <div style={{ fontSize: 36, marginBottom: 12 }}>⚠️</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#1a2a4a', marginBottom: 8 }}>
+              יש משימות פעילות בתור!
+            </div>
+            <div style={{ fontSize: 12, color: '#556', marginBottom: 22 }}>
+              סגירה עכשיו תבטל את כל ההמרות שרצות.<br />האם לסגור בכל זאת?
+            </div>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+              <button
+                onClick={() => { setCloseConfirmVisible(false); window.electronAPI?.confirmClose() }}
+                style={{
+                  padding: '7px 22px', cursor: 'pointer', borderRadius: 4,
+                  background: 'linear-gradient(180deg,#d9534f,#a02020)',
+                  border: '1px solid #801818', color: '#fff', fontWeight: 700, fontSize: 12,
+                  fontFamily: 'inherit',
+                }}
+              >כן, סגור</button>
+              <button
+                onClick={() => { setCloseConfirmVisible(false); window.electronAPI?.cancelClose() }}
+                style={{
+                  padding: '7px 22px', cursor: 'pointer', borderRadius: 4,
+                  background: 'linear-gradient(180deg,#f8f9fc,#e4e8f0)',
+                  border: '1px solid #a0a8bc', color: '#334', fontWeight: 700, fontSize: 12,
+                  fontFamily: 'inherit',
+                }}
+              >ביטול</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
     </ErrorBoundary>
   )

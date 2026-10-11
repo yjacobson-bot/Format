@@ -154,4 +154,13 @@ export function registerHandlers(mainWindow) {
     }
     return { success: true }
   })
+
+  ipcMain.on('app:confirm-close', () => {
+    mainWindow._forceClose = true
+    mainWindow.close()
+  })
+
+  ipcMain.on('app:cancel-close', () => {
+    // nothing — window stays open
+  })
 }

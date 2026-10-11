@@ -54,4 +54,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on(`menu:${action}`, handler)
     return () => ipcRenderer.removeListener(`menu:${action}`, handler)
   },
+
+  confirmClose: () => ipcRenderer.send('app:confirm-close'),
+  cancelClose: () => ipcRenderer.send('app:cancel-close'),
+  onCheckClose: (callback) => {
+    const handler = () => callback()
+    ipcRenderer.on('app:check-close', handler)
+    return () => ipcRenderer.removeListener('app:check-close', handler)
+  },
 })

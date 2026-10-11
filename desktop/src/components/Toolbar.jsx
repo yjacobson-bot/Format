@@ -2,10 +2,11 @@ import React from 'react'
 import { useStore } from '../store/useStore'
 
 export default function Toolbar({ onStart, onStop, onAddFiles }) {
-  const { settings, updateSettings, getStats } = useStore()
+  const { settings, updateSettings, getStats, paused, togglePause } = useStore()
   const stats = getStats()
   const hasRunning = stats.running > 0
   const hasPending = stats.pending > 0
+  const hasActive = hasRunning || hasPending
 
   async function handleAddFile() {
     const files = await window.electronAPI?.openFiles({ multiple: true })
@@ -90,6 +91,26 @@ export default function Toolbar({ onStart, onStop, onAddFiles }) {
       >
         <span style={{ fontSize: 20 }}>■</span>
         <span>עצור</span>
+      </button>
+
+      {/* Pause / Resume */}
+      <button
+        style={BIG_BTN({
+          background: hasActive
+            ? paused
+              ? 'linear-gradient(180deg,#f59e0b,#d97706)'
+              : 'linear-gradient(180deg,#6366f1,#4338ca)'
+            : 'linear-gradient(180deg,#e0e0e0,#d0d0d0)',
+          borderColor: hasActive ? (paused ? '#b45309' : '#3730a3') : '#b0b0b0',
+          color: hasActive ? '#fff' : '#999',
+          cursor: hasActive ? 'pointer' : 'default',
+        })}
+        onClick={togglePause}
+        disabled={!hasActive}
+        title={paused ? 'המשך' : 'השהה'}
+      >
+        <span style={{ fontSize: 20 }}>{paused ? '▶▶' : '⏸'}</span>
+        <span>{paused ? 'המשך' : 'השהה'}</span>
       </button>
 
       <div style={{ width: 1, height: 44, background: '#b0b5c8', margin: '0 4px' }} />

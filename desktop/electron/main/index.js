@@ -31,6 +31,13 @@ function createWindow() {
   registerHandlers(mainWindow)
 
   Menu.setApplicationMenu(null)
+
+  // Ask renderer if there are active tasks before closing
+  mainWindow.on('close', (e) => {
+    if (mainWindow._forceClose) return
+    e.preventDefault()
+    mainWindow.webContents.send('app:check-close')
+  })
 }
 
 app.whenReady().then(() => {

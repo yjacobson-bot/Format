@@ -6,6 +6,7 @@ function genId() { return `task_${Date.now()}_${++taskCounter}` }
 
 export const useStore = create((set, get) => ({
   activeCategory: 'video',
+  paused: false,
   tasks: [],
   settings: {
     outputDir: '',
@@ -21,6 +22,7 @@ export const useStore = create((set, get) => ({
   joinWindow: null,  // { files: [], settings: {} }
 
   setActiveCategory: (cat) => set({ activeCategory: cat }),
+  togglePause: () => set(state => ({ paused: !state.paused })),
 
   openSetupWindow: (targetFormat, category, files = []) => {
     let convSettings = {}
