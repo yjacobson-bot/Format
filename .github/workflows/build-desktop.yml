@@ -36,6 +36,13 @@ jobs:
           path: desktop/dist/*.exe
           retention-days: 90
 
+      - name: Delete existing release and tag if present
+        shell: bash
+        run: |
+          gh release delete v1.9.0 --yes --cleanup-tag 2>/dev/null || true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
@@ -44,9 +51,8 @@ jobs:
           draft: false
           prerelease: false
           files: desktop/dist/*.exe
-          overwrite: true
           body: |
-            ## Format Factory — Windows Installer
+            ## פורמט נקי v1.9.0 — Windows Installer
 
             הורד את קובץ ה-`.exe` למטה והתקן.
 
