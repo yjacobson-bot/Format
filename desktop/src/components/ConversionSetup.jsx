@@ -595,6 +595,24 @@ export default function ConversionSetup() {
             )}
           </div>
 
+          {/* Quick presets for video */}
+          {category === 'video' && (
+            <div style={{ border: '1px solid #ccc', borderRadius: 2, background: '#fff', padding: '6px 10px' }}>
+              <div style={{ fontSize: 10, color: '#888', marginBottom: 5 }}>⚡ פרופילים מהירים:</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                {DEVICE_PRESETS.map(p => (
+                  <button key={p.id} onClick={() => updateSetupSettings({ ...convSettings, ...p.settings })}
+                    style={{ fontSize: 10, padding: '2px 8px', cursor: 'pointer', background: '#f0f0f0', border: '1px solid #bbb', borderRadius: 10 }}
+                    onMouseEnter={e => { e.currentTarget.style.background = '#dce9f8'; e.currentTarget.style.borderColor = '#0066cc' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = '#f0f0f0'; e.currentTarget.style.borderColor = '#bbb' }}
+                  >
+                    {p.icon} {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Output settings */}
           <div style={{ border: '1px solid #ccc', borderRadius: 2, background: '#fff', padding: 10 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: '#1a3f6f', marginBottom: 8,

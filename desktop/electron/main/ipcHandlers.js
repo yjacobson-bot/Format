@@ -1,6 +1,7 @@
 import { ipcMain, dialog, shell, app } from 'electron'
 import path from 'path'
 import fs from 'fs'
+import { exec } from 'child_process'
 import {
   probeFile,
   startConversion,
@@ -10,6 +11,7 @@ import {
   mergeVideos,
   splitVideo,
   addWatermark,
+  scanDirectory,
 } from './ffmpegService.js'
 
 export function registerHandlers(mainWindow) {
@@ -22,6 +24,13 @@ export function registerHandlers(mainWindow) {
   })
 
   ipcMain.handle('dialog:openFolder', async () => {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      properties: ['openDirectory'],
+    })
+    return result.canceled ? null : result.filePaths[0]
+  })
+
+  ipcMain.handle('dialog:openFolderForScan', async () => {
     const result = await dialog.showOpenDialog(mainWindow, {
       properties: ['openDirectory'],
     })
@@ -52,6 +61,10 @@ export function registerHandlers(mainWindow) {
     return buildOutputPath(inputPath, outputDir, ext)
   })
 
+  ipcMain.handle('file:scanDirectory', (_, dirPath, extensions) => {
+    return scanDirectory(dirPath, extensions)
+  })
+
   ipcMain.handle('convert:start', (_, { taskId, inputPath, outputPath, settings, formatArgs }) => {
     startConversion(
       taskId,
@@ -59,7 +72,7 @@ export function registerHandlers(mainWindow) {
       outputPath,
       settings,
       formatArgs,
-      (id, percent) => mainWindow.webContents.send('convert:progress', { taskId: id, percent }),
+      (id, percent, details) => mainWindow.webContents.send('convert:progress', { taskId: id, percent, ...details }),
       (id) => mainWindow.webContents.send('convert:complete', { taskId: id }),
       (id, error) => mainWindow.webContents.send('convert:error', { taskId: id, error }),
     )
@@ -76,9 +89,9 @@ export function registerHandlers(mainWindow) {
     return { success: true }
   })
 
-  ipcMain.handle('tools:mergeVideos', async (_, { inputPaths, outputPath }) => {
+  ipcMain.handle('tools:mergeVideos', async (_, { inputPaths, outputPath, settings }) => {
     try {
-      await mergeVideos(inputPaths, outputPath, (percent) => {
+      await mergeVideos(inputPaths, outputPath, settings, (percent) => {
         mainWindow.webContents.send('tools:mergeProgress', { percent })
       })
       return { success: true }
@@ -114,5 +127,24 @@ export function registerHandlers(mainWindow) {
   ipcMain.handle('fs:ensureDir', (_, dirPath) => {
     fs.mkdirSync(dirPath, { recursive: true })
     return true
+  })
+
+  // Shutdown the computer after queue completes
+  ipcMain.handle('system:shutdown', () => {
+    if (process.platform === 'win32') {
+      exec('shutdown /s /t 30 /c "פורמט נקי: ההמרות הושלמו. המחשב יכבה בעוד 30 שניות."')
+    } else if (process.platform === 'darwin') {
+      exec('osascript -e \'tell app "System Events" to shut down\'')
+    } else {
+      exec('shutdown -h +1')
+    }
+    return { success: true }
+  })
+
+  ipcMain.handle('system:cancelShutdown', () => {
+    if (process.platform === 'win32') {
+      exec('shutdown /a')
+    }
+    return { success: true }
   })
 }

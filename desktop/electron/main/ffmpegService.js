@@ -98,25 +98,75 @@ export function buildFFmpegCommand(inputPath, outputPath, settings, formatArgs) 
   return cmd
 }
 
+// Parse ffmpeg stderr for accurate progress: time, speed, bitrate
+function parseProgressLine(line, totalDuration) {
+  const timeMatch = line.match(/time=(\d+):(\d+):(\d+)\.(\d+)/)
+  const speedMatch = line.match(/speed=\s*([\d.]+)x/)
+  const bitrateMatch = line.match(/bitrate=\s*([\d.]+)kbits\/s/)
+  const sizeMatch = line.match(/size=\s*(\d+)kB/)
+
+  if (!timeMatch) return null
+
+  const currentSec = parseInt(timeMatch[1]) * 3600 + parseInt(timeMatch[2]) * 60 + parseInt(timeMatch[3]) + parseInt(timeMatch[4]) / 100
+  const speed = speedMatch ? parseFloat(speedMatch[1]) : null
+  const bitrate = bitrateMatch ? parseFloat(bitrateMatch[1]) : null
+  const size = sizeMatch ? parseInt(sizeMatch[1]) * 1024 : null
+
+  let percent = 0
+  let remainingSec = null
+  if (totalDuration > 0) {
+    percent = Math.min(99, (currentSec / totalDuration) * 100)
+    if (speed && speed > 0) {
+      remainingSec = Math.round((totalDuration - currentSec) / speed)
+    }
+  }
+
+  return { percent, currentSec, totalDuration, speed, bitrate, size, remainingSec }
+}
+
 export function startConversion(taskId, inputPath, outputPath, settings, formatArgs, onProgress, onComplete, onError) {
   const cmd = buildFFmpegCommand(inputPath, outputPath, settings, formatArgs)
 
-  cmd.on('progress', (progress) => {
-    onProgress(taskId, progress.percent || 0)
-  })
+  // Get duration for accurate progress
+  probeFile(inputPath).then(meta => {
+    const totalDuration = meta?.format?.duration || 0
 
-  cmd.on('end', () => {
-    activeJobs.delete(taskId)
-    onComplete(taskId)
-  })
+    // Use stderr parsing for precise progress
+    cmd.on('stderr', (line) => {
+      const progress = parseProgressLine(line, totalDuration)
+      if (progress) {
+        onProgress(taskId, Math.round(progress.percent), {
+          speed: progress.speed,
+          remainingSec: progress.remainingSec,
+          bitrate: progress.bitrate,
+          currentSec: progress.currentSec,
+          totalDuration,
+        })
+      }
+    })
 
-  cmd.on('error', (err) => {
-    activeJobs.delete(taskId)
-    onError(taskId, err.message)
-  })
+    cmd.on('end', () => {
+      activeJobs.delete(taskId)
+      onComplete(taskId)
+    })
 
-  cmd.run()
-  activeJobs.set(taskId, cmd)
+    cmd.on('error', (err) => {
+      activeJobs.delete(taskId)
+      onError(taskId, err.message)
+    })
+
+    cmd.run()
+    activeJobs.set(taskId, cmd)
+  }).catch(() => {
+    // Fallback: run without duration info
+    cmd.on('progress', (progress) => {
+      onProgress(taskId, Math.round(progress.percent || 0), {})
+    })
+    cmd.on('end', () => { activeJobs.delete(taskId); onComplete(taskId) })
+    cmd.on('error', (err) => { activeJobs.delete(taskId); onError(taskId, err.message) })
+    cmd.run()
+    activeJobs.set(taskId, cmd)
+  })
 }
 
 export function cancelConversion(taskId) {
@@ -164,19 +214,34 @@ export async function getVideoDuration(filePath) {
   return meta.format?.duration || 0
 }
 
-export async function mergeVideos(inputPaths, outputPath, onProgress) {
+export async function mergeVideos(inputPaths, outputPath, settings, onProgress) {
   return new Promise((resolve, reject) => {
     const listFile = outputPath + '.txt'
     const listContent = inputPaths.map(p => `file '${p.replace(/'/g, "'\\''")}'`).join('\n')
     fs.writeFileSync(listFile, listContent)
 
-    ffmpeg()
+    let cmd = ffmpeg()
       .input(listFile)
       .inputOptions(['-f', 'concat', '-safe', '0'])
-      .outputOptions(['-c', 'copy'])
+
+    // If not using copy codec, apply transcoding settings
+    if (settings?.videoCodec && settings.videoCodec !== 'copy') {
+      cmd = cmd.videoCodec(settings.videoCodec)
+    }
+    if (settings?.audioCodec && settings.audioCodec !== 'copy') {
+      cmd = cmd.audioCodec(settings.audioCodec)
+    }
+    if (settings?.audioBitrate) cmd = cmd.audioBitrate(settings.audioBitrate)
+
+    // Default: stream copy for speed
+    if (!settings?.videoCodec || settings.videoCodec === 'copy') {
+      cmd = cmd.outputOptions(['-c', 'copy'])
+    }
+
+    cmd
       .output(outputPath)
       .on('progress', p => onProgress && onProgress(p.percent || 0))
-      .on('end', () => { fs.unlinkSync(listFile); resolve() })
+      .on('end', () => { try { fs.unlinkSync(listFile) } catch {} resolve() })
       .on('error', (err) => { try { fs.unlinkSync(listFile) } catch {} reject(err) })
       .run()
   })
@@ -220,4 +285,27 @@ export async function addWatermark(videoPath, watermarkPath, outputPath, positio
       .on('error', reject)
       .run()
   })
+}
+
+// Scan a directory recursively for media files
+export function scanDirectory(dirPath, extensions) {
+  const results = []
+  function scan(dir) {
+    try {
+      const entries = fs.readdirSync(dir, { withFileTypes: true })
+      for (const entry of entries) {
+        const fullPath = path.join(dir, entry.name)
+        if (entry.isDirectory()) {
+          scan(fullPath)
+        } else {
+          const ext = path.extname(entry.name).slice(1).toLowerCase()
+          if (extensions.includes(ext)) {
+            results.push({ name: entry.name, path: fullPath, size: fs.statSync(fullPath).size })
+          }
+        }
+      }
+    } catch {}
+  }
+  scan(dirPath)
+  return results
 }

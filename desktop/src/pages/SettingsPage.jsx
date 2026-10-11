@@ -63,8 +63,10 @@ export default function SettingsPage() {
 
           <div style={{ fontSize: 11, fontWeight: 600, color: '#555', marginBottom: 6 }}>אפשרויות</div>
           {[
-            { key: 'deleteSourceAfter', label: 'מחק קובץ מקור לאחר המרה מוצלחת', danger: true },
             { key: 'showNotifications', label: 'הצג התראות שולחן עבודה עם סיום המרות', danger: false },
+            { key: 'playSoundOnComplete', label: 'השמע צליל בסיום כל ההמרות', danger: false },
+            { key: 'shutdownOnComplete', label: 'כבה מחשב כאשר כל ההמרות מסתיימות', danger: true },
+            { key: 'deleteSourceAfter', label: 'מחק קובץ מקור לאחר המרה מוצלחת', danger: true },
           ].map(opt => (
             <div key={opt.key} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
               <input

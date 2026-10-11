@@ -3,12 +3,14 @@ import { contextBridge, ipcRenderer } from 'electron'
 contextBridge.exposeInMainWorld('electronAPI', {
   openFiles: (options) => ipcRenderer.invoke('dialog:openFiles', options),
   openFolder: () => ipcRenderer.invoke('dialog:openFolder'),
+  openFolderForScan: () => ipcRenderer.invoke('dialog:openFolderForScan'),
   saveFile: (options) => ipcRenderer.invoke('dialog:saveFile', options),
   probeFile: (filePath) => ipcRenderer.invoke('file:probe', filePath),
   fileExists: (filePath) => ipcRenderer.invoke('file:exists', filePath),
   openFile: (filePath) => ipcRenderer.invoke('file:open', filePath),
   showInFolder: (filePath) => ipcRenderer.invoke('file:showInFolder', filePath),
   buildOutputPath: (inputPath, outputDir, ext) => ipcRenderer.invoke('file:buildOutputPath', inputPath, outputDir, ext),
+  scanDirectory: (dirPath, extensions) => ipcRenderer.invoke('file:scanDirectory', dirPath, extensions),
 
   startConversion: (params) => ipcRenderer.invoke('convert:start', params),
   cancelConversion: (taskId) => ipcRenderer.invoke('convert:cancel', taskId),
@@ -21,6 +23,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getVersion: () => ipcRenderer.invoke('app:getVersion'),
   getDefaultOutputDir: () => ipcRenderer.invoke('app:getOutputDir'),
   ensureDir: (dirPath) => ipcRenderer.invoke('fs:ensureDir', dirPath),
+
+  shutdown: () => ipcRenderer.invoke('system:shutdown'),
+  cancelShutdown: () => ipcRenderer.invoke('system:cancelShutdown'),
 
   onProgress: (callback) => {
     const handler = (_, data) => callback(data)

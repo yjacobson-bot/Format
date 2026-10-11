@@ -39,8 +39,8 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v1.7.0
-          name: פורמט נקי v1.7.0
+          tag_name: v1.8.0
+          name: פורמט נקי v1.8.0
           draft: false
           prerelease: false
           files: desktop/dist/*.exe
@@ -50,6 +50,10 @@ jobs:
             הורד את קובץ ה-`.exe` למטה והתקן.
 
             - 🎬 המרת וידאו, 🎵 אודיו, 🖼️ תמונות, 📀 DVD/ISO
+            - 🛠 כלים: מיזוג, חיתוך, סיבוב, היפוך, שינוי מהירות, נרמול, fade
+            - ⚡ פרופילים מהירים: iPhone, YouTube, DVD, Instagram ועוד
+            - 📊 התקדמות מדויקת עם מהירות וזמן נותר
+            - 💤 אפשרות כיבוי מחשב בסיום
             - ✅ 100% אופליין — FFmpeg מובנה
             - 🔒 ללא טלמטריה
         env:

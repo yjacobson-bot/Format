@@ -12,6 +12,8 @@ export const useStore = create((set, get) => ({
     maxConcurrent: 2,
     deleteSourceAfter: false,
     showNotifications: true,
+    shutdownOnComplete: false,
+    playSoundOnComplete: true,
   },
 
   // The "Convert to X" setup window state
@@ -90,8 +92,14 @@ export const useStore = create((set, get) => ({
   clearCompleted: () => set(state => ({ tasks: state.tasks.filter(t => t.status !== 'done' && t.status !== 'error') })),
   clearAll: () => set({ tasks: [] }),
 
-  setTaskProgress: (taskId, percent) => set(state => ({
-    tasks: state.tasks.map(t => t.id === taskId ? { ...t, progress: Math.min(100, Math.max(0, percent || 0)) } : t)
+  setTaskProgress: (taskId, percent, details) => set(state => ({
+    tasks: state.tasks.map(t => t.id === taskId ? {
+      ...t,
+      progress: Math.min(100, Math.max(0, percent || 0)),
+      speed: details?.speed ?? t.speed,
+      remainingSec: details?.remainingSec ?? t.remainingSec,
+      bitrate: details?.bitrate ?? t.bitrate,
+    } : t)
   })),
   setTaskComplete: (taskId) => set(state => ({
     tasks: state.tasks.map(t => t.id === taskId ? { ...t, status: 'done', progress: 100, completedAt: new Date().toISOString() } : t)

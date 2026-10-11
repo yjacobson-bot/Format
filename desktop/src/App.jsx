@@ -1,5 +1,7 @@
 import React, { useEffect, useCallback, useState } from 'react'
 import { useStore } from './store/useStore'
+// Direct store access for completion callbacks
+const { getState: getStoreState } = useStore
 import Toolbar from './components/Toolbar'
 import Sidebar from './components/Sidebar'
 import FormatGrid from './components/FormatGrid'
@@ -11,6 +13,8 @@ import {
   VIDEO_INPUT_EXTENSIONS, AUDIO_INPUT_EXTENSIONS, IMAGE_INPUT_EXTENSIONS,
   VIDEO_FORMATS, AUDIO_FORMATS, IMAGE_FORMATS,
 } from './utils/formats'
+
+const ALL_MEDIA_EXTENSIONS = [...new Set([...VIDEO_INPUT_EXTENSIONS, ...AUDIO_INPUT_EXTENSIONS, ...IMAGE_INPUT_EXTENSIONS])]
 
 function detectCategory(filename) {
   const ext = filename.split('.').pop().toLowerCase()
@@ -136,8 +140,22 @@ export default function App() {
 
   useEffect(() => {
     if (!window.electronAPI) return
-    const off1 = window.electronAPI.onProgress(({ taskId, percent }) => setTaskProgress(taskId, percent))
-    const off2 = window.electronAPI.onComplete(({ taskId }) => setTaskComplete(taskId))
+    const off1 = window.electronAPI.onProgress(({ taskId, percent, speed, remainingSec, bitrate }) =>
+      setTaskProgress(taskId, percent, { speed, remainingSec, bitrate }))
+    const off2 = window.electronAPI.onComplete(({ taskId }) => {
+      setTaskComplete(taskId)
+      // Check if all tasks are done and shutdown is requested
+      const { tasks, settings } = getStoreState()
+      const stillRunning = tasks.filter(t => t.id !== taskId && (t.status === 'pending' || t.status === 'running'))
+      if (stillRunning.length === 0) {
+        if (settings.playSoundOnComplete) {
+          try { new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAA...').play().catch(() => {}) } catch {}
+        }
+        if (settings.shutdownOnComplete) {
+          window.electronAPI.shutdown()
+        }
+      }
+    })
     const off3 = window.electronAPI.onError(({ taskId, error }) => setTaskError(taskId, error))
     return () => { off1(); off2(); off3() }
   }, [setTaskProgress, setTaskComplete, setTaskError])
@@ -205,11 +223,26 @@ export default function App() {
   useEffect(() => {
     function onDragOver(e) { e.preventDefault(); setDragging(true) }
     function onDragLeave(e) { if (!e.relatedTarget) setDragging(false) }
-    function onDrop(e) {
+    async function onDrop(e) {
       e.preventDefault()
       setDragging(false)
-      const files = Array.from(e.dataTransfer.files)
-      if (files.length) handleFiles(files)
+      const items = Array.from(e.dataTransfer.files)
+      if (!items.length) return
+
+      // Check if any item is a directory (size === 0 heuristic; Electron gives real paths)
+      const regularFiles = []
+      const dirFiles = []
+      for (const f of items) {
+        if (f.size === 0 && !f.type) {
+          // Likely a directory — scan it
+          const found = await window.electronAPI?.scanDirectory(f.path, ALL_MEDIA_EXTENSIONS) || []
+          dirFiles.push(...found)
+        } else {
+          regularFiles.push(f)
+        }
+      }
+      const allFiles = [...regularFiles, ...dirFiles]
+      if (allFiles.length) handleFiles(allFiles)
     }
     window.addEventListener('dragover', onDragOver)
     window.addEventListener('dragleave', onDragLeave)
@@ -222,7 +255,7 @@ export default function App() {
   }, [])
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: '#ebebeb', position: 'relative' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: '#d8dce8', position: 'relative', fontFamily: 'Segoe UI, Arial, sans-serif' }}>
       <Toolbar
         onStart={processQueue}
         onStop={handleStop}
