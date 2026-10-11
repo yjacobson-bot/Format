@@ -1,5 +1,24 @@
-import React, { useEffect, useCallback, useState } from 'react'
+import React, { useEffect, useCallback, useState, Component } from 'react'
 import { useStore } from './store/useStore'
+
+class ErrorBoundary extends Component {
+  state = { error: null }
+  static getDerivedStateFromError(error) { return { error } }
+  render() {
+    if (this.state.error) return (
+      <div style={{ padding: 40, fontFamily: 'Segoe UI, Arial, sans-serif', direction: 'rtl', color: '#333' }}>
+        <h2 style={{ color: '#c00' }}>שגיאה בטעינת התוכנה</h2>
+        <pre style={{ background: '#f5f5f5', padding: 12, fontSize: 11, borderRadius: 4, color: '#555', whiteSpace: 'pre-wrap' }}>
+          {this.state.error?.message}
+        </pre>
+        <button onClick={() => this.setState({ error: null })} style={{ marginTop: 12, padding: '6px 18px', cursor: 'pointer' }}>
+          נסה שוב
+        </button>
+      </div>
+    )
+    return this.props.children
+  }
+}
 // Direct store access for completion callbacks
 const { getState: getStoreState } = useStore
 import Toolbar from './components/Toolbar'
@@ -238,12 +257,12 @@ export default function App() {
       const items = Array.from(e.dataTransfer.files)
       if (!items.length) return
 
-      // Check if any item is a directory (size === 0 heuristic; Electron gives real paths)
+      // Detect directories using main-process fs.stat (reliable on Windows)
       const regularFiles = []
       const dirFiles = []
       for (const f of items) {
-        if (f.size === 0 && !f.type) {
-          // Likely a directory — scan it
+        const isDir = f.path && await window.electronAPI?.isDirectory(f.path)
+        if (isDir) {
           const found = await window.electronAPI?.scanDirectory(f.path, ALL_MEDIA_EXTENSIONS) || []
           dirFiles.push(...found)
         } else {
@@ -264,6 +283,7 @@ export default function App() {
   }, [])
 
   return (
+    <ErrorBoundary>
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: '#d8dce8', position: 'relative', fontFamily: 'Segoe UI, Arial, sans-serif' }}>
       <Toolbar
         onStart={processQueue}
@@ -320,5 +340,6 @@ export default function App() {
       <ConversionSetup />
       <JoinWindow />
     </div>
+    </ErrorBoundary>
   )
 }

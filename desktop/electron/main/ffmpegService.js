@@ -61,7 +61,7 @@ export function buildFFmpegCommand(inputPath, outputPath, settings, formatArgs) 
   if (settings.channels) cmd = cmd.audioChannels(parseInt(settings.channels))
 
   if (settings.volume) cmd = cmd.audioFilters(`volume=${settings.volume}`)
-  if (settings.normalize) cmd = cmd.audioFilters('loudnorm')
+  if (settings.normalize) cmd = cmd.audioFilters('dynaudnorm')
   if (settings.fadeIn) cmd = cmd.audioFilters(`afade=t=in:d=${settings.fadeIn}`)
   if (settings.fadeOut) cmd = cmd.audioFilters(`afade=t=out:d=${settings.fadeOut}`)
 
@@ -131,10 +131,15 @@ export function startConversion(taskId, inputPath, outputPath, settings, formatA
   probeFile(inputPath).then(meta => {
     const totalDuration = meta?.format?.duration || 0
 
-    // Use stderr parsing for precise progress
+    // Throttle progress updates to max 4/sec per task to avoid IPC overload
+    let lastProgressTime = 0
+
     cmd.on('stderr', (line) => {
       const progress = parseProgressLine(line, totalDuration)
       if (progress) {
+        const now = Date.now()
+        if (now - lastProgressTime < 250) return
+        lastProgressTime = now
         onProgress(taskId, Math.round(progress.percent), {
           speed: progress.speed,
           remainingSec: progress.remainingSec,

@@ -53,6 +53,10 @@ export function registerHandlers(mainWindow) {
 
   ipcMain.handle('file:exists', (_, filePath) => fs.existsSync(filePath))
 
+  ipcMain.handle('file:isDirectory', (_, filePath) => {
+    try { return fs.statSync(filePath).isDirectory() } catch { return false }
+  })
+
   ipcMain.handle('file:open', (_, filePath) => shell.openPath(filePath))
 
   ipcMain.handle('file:showInFolder', (_, filePath) => shell.showItemInFolder(filePath))

@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveFile: (options) => ipcRenderer.invoke('dialog:saveFile', options),
   probeFile: (filePath) => ipcRenderer.invoke('file:probe', filePath),
   fileExists: (filePath) => ipcRenderer.invoke('file:exists', filePath),
+  isDirectory: (filePath) => ipcRenderer.invoke('file:isDirectory', filePath),
   openFile: (filePath) => ipcRenderer.invoke('file:open', filePath),
   showInFolder: (filePath) => ipcRenderer.invoke('file:showInFolder', filePath),
   buildOutputPath: (inputPath, outputDir, ext) => ipcRenderer.invoke('file:buildOutputPath', inputPath, outputDir, ext),
