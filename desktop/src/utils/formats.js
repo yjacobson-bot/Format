@@ -174,7 +174,7 @@ export const IMAGE_FORMATS = [
 ]
 
 export const RESOLUTIONS = [
-  { label: 'Same as source', value: null },
+  { label: 'זהה למקור', value: null },
   { label: '4K (3840×2160)', value: '3840:2160' },
   { label: '1080p (1920×1080)', value: '1920:1080' },
   { label: '720p (1280×720)', value: '1280:720' },
@@ -186,7 +186,7 @@ export const RESOLUTIONS = [
 ]
 
 export const VIDEO_BITRATES = [
-  { label: 'Auto', value: null },
+  { label: 'אוטומטי', value: null },
   { label: '8000 kbps', value: '8000k' },
   { label: '4000 kbps', value: '4000k' },
   { label: '2000 kbps', value: '2000k' },
@@ -197,7 +197,7 @@ export const VIDEO_BITRATES = [
 ]
 
 export const AUDIO_BITRATES = [
-  { label: 'Auto', value: null },
+  { label: 'אוטומטי', value: null },
   { label: '320 kbps', value: '320k' },
   { label: '256 kbps', value: '256k' },
   { label: '192 kbps', value: '192k' },
@@ -208,7 +208,7 @@ export const AUDIO_BITRATES = [
 ]
 
 export const FRAMERATES = [
-  { label: 'Same as source', value: null },
+  { label: 'זהה למקור', value: null },
   { label: '60 fps', value: '60' },
   { label: '30 fps', value: '30' },
   { label: '25 fps', value: '25' },
@@ -218,7 +218,7 @@ export const FRAMERATES = [
 ]
 
 export const SAMPLE_RATES = [
-  { label: 'Same as source', value: null },
+  { label: 'זהה למקור', value: null },
   { label: '48000 Hz', value: '48000' },
   { label: '44100 Hz', value: '44100' },
   { label: '32000 Hz', value: '32000' },
@@ -228,10 +228,10 @@ export const SAMPLE_RATES = [
 ]
 
 export const AUDIO_CHANNELS = [
-  { label: 'Same as source', value: null },
-  { label: 'Stereo (2)', value: '2' },
-  { label: 'Mono (1)', value: '1' },
-  { label: 'Surround 5.1 (6)', value: '6' },
+  { label: 'זהה למקור', value: null },
+  { label: 'סטריאו (2)', value: '2' },
+  { label: 'מונו (1)', value: '1' },
+  { label: 'סראונד 5.1 (6)', value: '6' },
 ]
 
 export const DEVICE_PRESETS = [
@@ -270,23 +270,23 @@ export const DEVICE_PRESETS = [
 ]
 
 export const VIDEO_CODECS = [
-  { label: 'Auto', value: null },
+  { label: 'אוטומטי', value: null },
   { label: 'H.264 (libx264)', value: 'libx264' },
   { label: 'H.265/HEVC (libx265)', value: 'libx265' },
   { label: 'VP9 (libvpx-vp9)', value: 'libvpx-vp9' },
   { label: 'MPEG-4 (mpeg4)', value: 'mpeg4' },
   { label: 'MPEG-2 (mpeg2video)', value: 'mpeg2video' },
-  { label: 'Copy (no re-encode)', value: 'copy' },
+  { label: 'העתק (ללא קידוד מחדש)', value: 'copy' },
 ]
 
 export const AUDIO_CODECS = [
-  { label: 'Auto', value: null },
+  { label: 'אוטומטי', value: null },
   { label: 'AAC (aac)', value: 'aac' },
   { label: 'MP3 (libmp3lame)', value: 'libmp3lame' },
   { label: 'Vorbis (libvorbis)', value: 'libvorbis' },
   { label: 'Opus (libopus)', value: 'libopus' },
   { label: 'FLAC (flac)', value: 'flac' },
-  { label: 'Copy (no re-encode)', value: 'copy' },
+  { label: 'העתק (ללא קידוד מחדש)', value: 'copy' },
 ]
 
 export const VIDEO_INPUT_EXTENSIONS = [

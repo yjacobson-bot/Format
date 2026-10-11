@@ -39,7 +39,8 @@ export default function Header({ onStartAll, onClearAll }) {
           <div style={{
             background: 'rgba(255,255,255,0.12)', borderRadius: 2, padding: '2px 8px',
             display: 'flex', alignItems: 'center', gap: 5,
-            borderLeft: `3px solid ${color}`,
+            borderRight: `3px solid ${color}`,
+            borderLeft: 'none',
           }}>
             <span style={{ color: '#dde', fontSize: 11, fontWeight: 500 }}>{label}</span>
           </div>

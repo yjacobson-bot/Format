@@ -13,6 +13,17 @@ body {
   background: #ebebeb;
   user-select: none;
   color: #222;
+  direction: rtl;
+  text-align: right;
+}
+
+/* RTL sidebar border fix */
+.ff-sidebar-item {
+  border-right: 3px solid transparent !important;
+  border-left: none !important;
+}
+.ff-sidebar-item.active {
+  border-right-color: #7ab8f5 !important;
 }
 
 /* Format Factory style scrollbar */

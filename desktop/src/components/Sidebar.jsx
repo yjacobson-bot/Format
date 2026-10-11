@@ -35,7 +35,8 @@ export default function Sidebar() {
               style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'center',
                 padding: '10px 4px 8px', gap: 4, cursor: 'pointer', border: 'none',
-                borderLeft: `3px solid ${isActive ? cat.color : 'transparent'}`,
+                borderRight: `3px solid ${isActive ? cat.color : 'transparent'}`,
+                borderLeft: 'none',
                 background: isActive ? 'rgba(255,255,255,0.1)' : 'transparent',
                 color: isActive ? '#fff' : '#bbb',
                 transition: 'all 0.1s',
@@ -69,7 +70,8 @@ export default function Sidebar() {
           style={{
             display: 'flex', flexDirection: 'column', alignItems: 'center',
             padding: '8px 4px', gap: 3, cursor: 'pointer', border: 'none',
-            borderLeft: `3px solid ${activeCategory === 'settings' ? '#60a5fa' : 'transparent'}`,
+            borderRight: `3px solid ${activeCategory === 'settings' ? '#60a5fa' : 'transparent'}`,
+            borderLeft: 'none',
             background: activeCategory === 'settings' ? 'rgba(255,255,255,0.1)' : 'transparent',
             color: activeCategory === 'settings' ? '#fff' : '#999',
             width: '100%', transition: 'all 0.1s',
