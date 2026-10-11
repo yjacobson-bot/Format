@@ -11,7 +11,8 @@ const DVD_FORMATS = [
 
 const TOOLS_OPTIONS = [
   { id: 'merge', label: 'מיזוג וידאו', ext: 'mp4', icon: '🔗', ffmpegArgs: [] },
-  { id: 'extract_audio', label: 'חלץ אודיו', ext: 'mp3', icon: '🎵', ffmpegArgs: ['-vn', '-c:a', 'libmp3lame', '-q:a', '2'] },
+  { id: 'merge_audio', label: 'מיזוג אודיו', ext: 'mp3', icon: '🎵', ffmpegArgs: [] },
+  { id: 'extract_audio', label: 'חלץ אודיו', ext: 'mp3', icon: '🎤', ffmpegArgs: ['-vn', '-c:a', 'libmp3lame', '-q:a', '2'] },
   { id: 'gif', label: 'וידאו → GIF', ext: 'gif', icon: '🖼️', ffmpegArgs: ['-vf', 'fps=10,scale=480:-1:flags=lanczos', '-loop', '0'] },
   { id: 'mute', label: 'הסרת שמע', ext: 'mp4', icon: '🔇', ffmpegArgs: ['-an', '-c:v', 'copy'] },
 ]
@@ -57,7 +58,7 @@ export default function FormatGrid() {
         {formats.map(fmt => (
           <button
             key={fmt.id}
-            onClick={() => fmt.id === 'merge' ? openJoinWindow() : openSetupWindow(fmt, activeCategory)}
+            onClick={() => (fmt.id === 'merge' || fmt.id === 'merge_audio') ? openJoinWindow([], fmt.id === 'merge_audio' ? 'audio' : 'video') : openSetupWindow(fmt, activeCategory)}
             style={{
               width: 110, height: 62,
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',

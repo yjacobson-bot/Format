@@ -14,7 +14,8 @@ export default function JoinWindow() {
   const [dragOverIdx, setDragOverIdx] = useState(null)
 
   if (!joinWindow) return null
-  const { files, settings } = joinWindow
+  const { files, settings, kind = 'video' } = joinWindow
+  const isAudio = kind === 'audio'
 
   async function handleAddFiles() {
     const picked = await window.electronAPI?.openFiles({ multiple: true })
@@ -50,7 +51,7 @@ export default function JoinWindow() {
 
   function handleOk() {
     if (files.length < 2) return
-    addJoinTask(files, settings.ext || 'mp4', settings)
+    addJoinTask(files, settings.ext || (isAudio ? 'mp3' : 'mp4'), { ...settings, joinKind: kind })
     closeJoinWindow()
   }
 
@@ -72,7 +73,7 @@ export default function JoinWindow() {
           color: '#fff', padding: '7px 12px', fontSize: 13, fontWeight: 700,
           borderRadius: '4px 4px 0 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         }}>
-          <span>🔗 מיזוג קטעי וידאו</span>
+          <span>{isAudio ? '🎵 מיזוג קטעי אודיו' : '🔗 מיזוג קטעי וידאו'}</span>
           <button onClick={closeJoinWindow} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', cursor: 'pointer', borderRadius: 2, padding: '1px 7px', fontSize: 14 }}>✕</button>
         </div>
 
@@ -96,8 +97,8 @@ export default function JoinWindow() {
           >
             {files.length === 0 ? (
               <div style={{ height: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#aaa', fontSize: 11, gap: 4 }}>
-                <span style={{ fontSize: 24 }}>🎬</span>
-                גרור קבצי וידאו לכאן (לפחות 2)
+                <span style={{ fontSize: 24 }}>{isAudio ? '🎵' : '🎬'}</span>
+                גרור קבצי {isAudio ? 'אודיו' : 'וידאו'} לכאן (לפחות 2)
               </div>
             ) : (
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
@@ -152,23 +153,45 @@ export default function JoinWindow() {
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, fontSize: 11 }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <label style={{ fontSize: 10, color: '#555' }}>פורמט פלט</label>
-                <select value={s.ext || 'mp4'} onChange={e => updateJoinSettings({ ...s, ext: e.target.value })}
+                <select value={s.ext || (isAudio ? 'mp3' : 'mp4')} onChange={e => updateJoinSettings({ ...s, ext: e.target.value })}
                   style={{ fontSize: 11, padding: '2px 6px', border: '1px solid #bbb', borderRadius: 2, background: '#fff' }}>
-                  <option value="mp4">MP4</option>
-                  <option value="mkv">MKV</option>
-                  <option value="avi">AVI</option>
-                  <option value="mov">MOV</option>
+                  {isAudio ? <>
+                    <option value="mp3">MP3</option>
+                    <option value="aac">AAC</option>
+                    <option value="flac">FLAC</option>
+                    <option value="wav">WAV</option>
+                    <option value="m4a">M4A</option>
+                  </> : <>
+                    <option value="mp4">MP4</option>
+                    <option value="mkv">MKV</option>
+                    <option value="avi">AVI</option>
+                    <option value="mov">MOV</option>
+                  </>}
                 </select>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <label style={{ fontSize: 10, color: '#555' }}>קודק וידאו</label>
-                <select value={s.videoCodec || 'libx264'} onChange={e => updateJoinSettings({ ...s, videoCodec: e.target.value })}
-                  style={{ fontSize: 11, padding: '2px 6px', border: '1px solid #bbb', borderRadius: 2, background: '#fff' }}>
-                  <option value="copy">העתק (מהיר)</option>
-                  <option value="libx264">H.264</option>
-                  <option value="libx265">H.265/HEVC</option>
-                </select>
-              </div>
+              {isAudio ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <label style={{ fontSize: 10, color: '#555' }}>קודק אודיו</label>
+                  <select value={s.audioCodec || 'libmp3lame'} onChange={e => updateJoinSettings({ ...s, audioCodec: e.target.value })}
+                    style={{ fontSize: 11, padding: '2px 6px', border: '1px solid #bbb', borderRadius: 2, background: '#fff' }}>
+                    <option value="copy">העתק (מהיר)</option>
+                    <option value="libmp3lame">MP3</option>
+                    <option value="aac">AAC</option>
+                    <option value="flac">FLAC</option>
+                    <option value="pcm_s16le">WAV</option>
+                  </select>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <label style={{ fontSize: 10, color: '#555' }}>קודק וידאו</label>
+                  <select value={s.videoCodec || 'libx264'} onChange={e => updateJoinSettings({ ...s, videoCodec: e.target.value })}
+                    style={{ fontSize: 11, padding: '2px 6px', border: '1px solid #bbb', borderRadius: 2, background: '#fff' }}>
+                    <option value="copy">העתק (מהיר)</option>
+                    <option value="libx264">H.264</option>
+                    <option value="libx265">H.265/HEVC</option>
+                  </select>
+                </div>
+              )}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <label style={{ fontSize: 10, color: '#555' }}>קצב סיביות אודיו</label>
                 <select value={s.audioBitrate || '192k'} onChange={e => updateJoinSettings({ ...s, audioBitrate: e.target.value })}
@@ -183,7 +206,7 @@ export default function JoinWindow() {
           </div>
 
           <div style={{ fontSize: 10, color: '#888', background: '#fffbe6', border: '1px solid #ffe58f', borderRadius: 2, padding: '5px 8px' }}>
-            💡 הקבצים יחוברו בסדר שבו הם מופיעים ברשימה. גרור שורה לשינוי סדר.
+            💡 הקבצים {isAudio ? 'האודיו' : 'הוידאו'} יחוברו בסדר שבו הם מופיעים ברשימה. גרור שורה לשינוי סדר.
           </div>
         </div>
 

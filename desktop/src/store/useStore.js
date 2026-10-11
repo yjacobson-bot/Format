@@ -38,7 +38,7 @@ export const useStore = create((set, get) => ({
 
   closeSetupWindow: () => set({ setupWindow: null }),
 
-  openJoinWindow: (files = []) => set({ joinWindow: { files, settings: { videoCodec: 'libx264', audioBitrate: '192k' } } }),
+  openJoinWindow: (files = [], kind = 'video') => set({ joinWindow: { files, kind, settings: kind === 'audio' ? { ext: 'mp3', audioCodec: 'libmp3lame', audioBitrate: '192k' } : { ext: 'mp4', videoCodec: 'libx264', audioBitrate: '192k' } } }),
   updateJoinFiles: (files) => set(state => ({ joinWindow: state.joinWindow ? { ...state.joinWindow, files } : null })),
   updateJoinSettings: (settings) => set(state => ({ joinWindow: state.joinWindow ? { ...state.joinWindow, settings } : null })),
   closeJoinWindow: () => set({ joinWindow: null }),
