@@ -163,13 +163,6 @@ export default function Toolbar({ onStart, onStop, onAddFiles }) {
         )}
       </div>
 
-      <div style={{ width: 1, height: 44, background: '#b0b5c8', margin: '0 6px' }} />
-
-      <div style={{
-        fontSize: 9, color: '#4ade80', background: '#0a1a0a',
-        border: '1px solid #2a4a2a', borderRadius: 3,
-        padding: '3px 7px', fontWeight: 700,
-      }}>● OFFLINE</div>
     </div>
   )
 }

@@ -27,6 +27,8 @@ export const useStore = create((set, get) => ({
     if (category === 'video') convSettings = getDefaultVideoSettings()
     else if (category === 'audio') convSettings = getDefaultAudioSettings()
     else if (category === 'image') convSettings = getDefaultImageSettings()
+    const { settings } = get()
+    if (category === 'video' && settings.defaultHwAccel) convSettings.hwAccel = settings.defaultHwAccel
     set({ setupWindow: { targetFormat, category, files, convSettings } })
   },
 

@@ -1,8 +1,20 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useStore } from '../store/useStore'
+
+const HW_OPTIONS = [
+  { value: '',      label: 'CPU בלבד (ברירת מחדל)' },
+  { value: 'nvenc', label: '⚡ NVIDIA NVENC' },
+  { value: 'qsv',   label: '⚡ Intel QuickSync' },
+  { value: 'amf',   label: '⚡ AMD AMF' },
+]
 
 export default function SettingsPage() {
   const { settings, updateSettings } = useStore()
+  const [availableHW, setAvailableHW] = useState([])
+
+  useEffect(() => {
+    window.electronAPI?.detectHardwareEncoders?.().then(hw => setAvailableHW(hw || [])).catch(() => {})
+  }, [])
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', background: '#ebebeb' }}>
@@ -84,6 +96,37 @@ export default function SettingsPage() {
               </label>
             </div>
           ))}
+        </div>
+
+        {/* GPU Acceleration */}
+        <div style={{ background: '#f8f8f8', border: '1px solid #ccc', borderRadius: 2, padding: 10, marginBottom: 8 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#555', marginBottom: 10, borderBottom: '1px solid #ddd', paddingBottom: 5 }}>
+            ⚡ האצת חומרה (GPU) — ברירת מחדל להמרות וידאו
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <select
+              value={settings.defaultHwAccel || ''}
+              onChange={e => updateSettings({ defaultHwAccel: e.target.value || null })}
+              style={{ fontSize: 11, padding: '3px 6px', border: '1px solid #bbb', borderRadius: 2, background: '#fff', minWidth: 180 }}
+            >
+              {HW_OPTIONS.map(o => {
+                const avail = !o.value || availableHW.includes(o.value)
+                return (
+                  <option key={o.value} value={o.value} disabled={o.value && !avail}>
+                    {o.label}{o.value && !avail ? ' (לא זמין)' : ''}
+                  </option>
+                )
+              })}
+            </select>
+            <div style={{ fontSize: 10, color: '#666' }}>
+              {availableHW.length === 0
+                ? '🔍 לא זוהה GPU תואם במחשב זה'
+                : `✅ זוהה: ${availableHW.map(h => h.toUpperCase()).join(', ')}`}
+            </div>
+          </div>
+          {settings.defaultHwAccel && (
+            <div style={{ fontSize: 10, color: '#0a7', marginTop: 6 }}>⚡ המרות וידאו ירוצו אוטומטית על ה-GPU — מהיר פי 5–20. אם יש שגיאה, יהיה fallback ל-CPU.</div>
+          )}
         </div>
 
         {/* About */}
