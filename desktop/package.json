@@ -1,8 +1,8 @@
 {
   "name": "format-factory",
-  "version": "1.5.0",
-  "description": "Free open-source multimedia converter",
-  "author": "Format Factory Contributors",
+  "version": "1.6.0",
+  "description": "ממיר מולטימדיה חינמי ועצמאי",
+  "author": "פורמט נקי",
   "main": "out/main/index.js",
   "repository": {
     "type": "git",
@@ -34,7 +34,7 @@
   },
   "build": {
     "appId": "com.openformatfactory.app",
-    "productName": "Format Factory",
+    "productName": "פורמט נקי",
     "directories": { "output": "dist" },
     "files": ["out/**/*", "!node_modules/.cache"],
     "asarUnpack": [
@@ -50,7 +50,14 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
+      "createStartMenuShortcut": true,
+      "language": "1037",
+      "installerLanguages": ["Hebrew"],
+      "installerSidebar": null,
+      "installerHeader": null,
+      "welcomeTitle": "ברוך הבא להתקנת פורמט נקי",
+      "runAfterFinish": true,
+      "shortcutName": "פורמט נקי"
     }
   }
 }

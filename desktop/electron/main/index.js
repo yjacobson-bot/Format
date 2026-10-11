@@ -30,48 +30,7 @@ function createWindow() {
 
   registerHandlers(mainWindow)
 
-  Menu.setApplicationMenu(createMenu())
-}
-
-function createMenu() {
-  const template = [
-    {
-      label: 'File',
-      submenu: [
-        { label: 'Open Files...', accelerator: 'CmdOrCtrl+O', click: () => mainWindow.webContents.send('menu:openFiles') },
-        { type: 'separator' },
-        { label: 'Clear Queue', click: () => mainWindow.webContents.send('menu:clearQueue') },
-        { type: 'separator' },
-        { label: 'Exit', role: 'quit' },
-      ],
-    },
-    {
-      label: 'Options',
-      submenu: [
-        { label: 'Settings', accelerator: 'CmdOrCtrl+,', click: () => mainWindow.webContents.send('menu:openSettings') },
-        { type: 'separator' },
-        { label: 'Dark Mode', type: 'checkbox', checked: false, click: (item) => {
-          nativeTheme.themeSource = item.checked ? 'dark' : 'light'
-          mainWindow.webContents.send('menu:toggleTheme', item.checked)
-        }},
-      ],
-    },
-    {
-      label: 'Tools',
-      submenu: [
-        { label: 'Merge Videos', click: () => mainWindow.webContents.send('menu:mergeVideos') },
-        { label: 'Split Video', click: () => mainWindow.webContents.send('menu:splitVideo') },
-        { label: 'Add Watermark', click: () => mainWindow.webContents.send('menu:addWatermark') },
-      ],
-    },
-    {
-      label: 'Help',
-      submenu: [
-        { label: `About Format Factory v${app.getVersion()}`, click: () => mainWindow.webContents.send('menu:about') },
-      ],
-    },
-  ]
-  return Menu.buildFromTemplate(template)
+  Menu.setApplicationMenu(null)
 }
 
 app.whenReady().then(() => {
