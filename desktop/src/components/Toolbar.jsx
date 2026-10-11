@@ -43,8 +43,8 @@ export default function Toolbar({ onStart, onStop, onAddFiles }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 5, paddingRight: 10, borderLeft: '1px solid #bbb', marginLeft: 4 }}>
         <span style={{ fontSize: 18 }}>🔄</span>
         <div>
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#1a3f6f', lineHeight: 1.2 }}>Format Factory</div>
-          <div style={{ fontSize: 8, color: '#888', lineHeight: 1 }}>ממיר מולטימדיה</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#1a3f6f', lineHeight: 1.2 }}>פורמט נקי</div>
+          <div style={{ fontSize: 8, color: '#888', lineHeight: 1 }}>ממיר מדיה</div>
         </div>
       </div>
 

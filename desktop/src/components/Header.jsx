@@ -15,7 +15,7 @@ export default function Header({ onStartAll, onClearAll }) {
   const { activeCategory, getStats } = useStore()
   const stats = getStats()
   const color = CAT_COLORS[activeCategory] || '#1a5fa8'
-  const label = CAT_LABELS[activeCategory] || 'Format Factory'
+  const label = CAT_LABELS[activeCategory] || 'פורמט נקי'
 
   return (
     <header className="ff-header shrink-0 flex items-center justify-between px-3 py-0" style={{ height: 44 }}>
@@ -28,8 +28,8 @@ export default function Header({ onStartAll, onClearAll }) {
         }}>
           <span style={{ fontSize: 16 }}>🔄</span>
           <div>
-            <div style={{ color: '#fff', fontWeight: 700, fontSize: 12, lineHeight: 1.2 }}>Format Factory</div>
-            <div style={{ color: '#9ec8f0', fontSize: 9, lineHeight: 1 }}>ממיר מולטימדיה חינמי</div>
+            <div style={{ color: '#fff', fontWeight: 700, fontSize: 12, lineHeight: 1.2 }}>פורמט נקי</div>
+            <div style={{ color: '#9ec8f0', fontSize: 9, lineHeight: 1 }}>ממיר מדיה חינמי ואופליין</div>
           </div>
         </div>
 
