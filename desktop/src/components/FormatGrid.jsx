@@ -21,7 +21,7 @@ const TOOLS_OPTIONS = [
   { id: 'flip_v',        label: 'היפוך אנכי',    ext: 'mp4', icon: '↕️', ffmpegArgs: ['-vf', 'vflip', '-c:a', 'copy'] },
   { id: 'speed2x',       label: 'מהירות ×2',     ext: 'mp4', icon: '⏩', ffmpegArgs: ['-vf', 'setpts=0.5*PTS', '-af', 'atempo=2.0'] },
   { id: 'speed05x',      label: 'האטה ×0.5',     ext: 'mp4', icon: '⏪', ffmpegArgs: ['-vf', 'setpts=2.0*PTS', '-af', 'atempo=0.5'] },
-  { id: 'normalize',     label: 'נרמול שמע',     ext: 'mp3', icon: '🔊', ffmpegArgs: ['-af', 'loudnorm', '-c:a', 'libmp3lame', '-q:a', '2'] },
+  { id: 'normalize',     label: 'נרמול שמע',     ext: 'mp3', icon: '🔊', ffmpegArgs: ['-af', 'dynaudnorm', '-c:a', 'libmp3lame', '-q:a', '2'] },
   { id: 'mono',          label: 'סטריאו → מונו', ext: 'mp3', icon: '🎙️', ffmpegArgs: ['-ac', '1', '-c:a', 'libmp3lame', '-q:a', '2'] },
   { id: 'fadein',        label: 'Fade In (3s)',   ext: 'mp3', icon: '📈', ffmpegArgs: ['-af', 'afade=t=in:st=0:d=3', '-c:a', 'libmp3lame', '-q:a', '2'] },
   { id: 'fadeout',       label: 'Fade Out (3s)',  ext: 'mp3', icon: '📉', ffmpegArgs: ['-af', 'afade=t=out:st=0:d=3', '-c:a', 'libmp3lame', '-q:a', '2'] },
@@ -114,7 +114,7 @@ export default function FormatGrid() {
             onMouseUp={e => e.currentTarget.style.transform = 'translateY(-1px)'}
           >
             <span style={{ fontSize: 26, lineHeight: 1 }}>{fmt.icon || '📄'}</span>
-            <span style={{ fontSize: 11, fontWeight: 700, color: '#1a2a4a', lineHeight: 1.2, textAlign: 'center' }}>
+            <span style={{ fontSize: 10, fontWeight: 700, color: '#1a2a4a', lineHeight: 1.2, textAlign: 'center', wordBreak: 'keep-all', hyphens: 'none', maxWidth: 86 }}>
               {fmt.label}
             </span>
             {fmt.ext && <span style={{ fontSize: 9, color: meta.color, fontWeight: 600 }}>.{fmt.ext}</span>}
@@ -124,11 +124,13 @@ export default function FormatGrid() {
 
       {/* Drag hint */}
       <div style={{
-        margin: '0 16px 14px', padding: '8px 14px',
+        margin: '0 16px 14px', padding: '12px 20px',
         background: '#f0f4ff', border: '1px dashed #99aee8', borderRadius: 4,
         fontSize: 11, color: '#4466aa', textAlign: 'center',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
       }}>
-        💡 גרור קבצים או תיקיות לחלון — התוכנה תזהה אוטומטית ותציג את כל אפשרויות ההמרה
+        <span style={{ fontSize: 16 }}>💡</span>
+        <span>גרור קבצים או תיקיות לחלון — התוכנה תזהה אוטומטית ותציג את כל אפשרויות ההמרה</span>
       </div>
     </div>
   )

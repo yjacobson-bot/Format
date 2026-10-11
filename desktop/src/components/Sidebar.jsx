@@ -89,9 +89,9 @@ export default function Sidebar() {
               onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = '#dce5f5' }}
               onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = isOpen ? '#e0e4ef' : 'linear-gradient(180deg,#f5f6fa,#e8e9f0)' }}
             >
-              <span style={{ fontSize: 18, flexShrink: 0 }}>{cat.icon}</span>
+              <span style={{ fontSize: 10, opacity: 0.7, flexShrink: 0, transition: 'transform 0.2s', transform: isOpen ? 'rotate(0deg)' : 'rotate(-90deg)' }}>▼</span>
               <span style={{ flex: 1, fontSize: 12, fontWeight: 700, lineHeight: 1.2 }}>{cat.label}</span>
-              <span style={{ fontSize: 10, opacity: 0.7, flexShrink: 0 }}>{isOpen ? '▲' : '▼'}</span>
+              <span style={{ fontSize: 18, flexShrink: 0 }}>{cat.icon}</span>
             </button>
 
             {/* Expanded format tiles */}

@@ -45,7 +45,7 @@ export default function Toolbar({ onStart, onStop, onAddFiles }) {
       {/* Logo */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 6,
-        paddingLeft: 12, marginLeft: 8, borderLeft: '1px solid #b0b5c8',
+        paddingRight: 12, marginRight: 8, borderRight: '1px solid #b0b5c8',
       }}>
         <span style={{ fontSize: 26 }}>🔄</span>
         <div>

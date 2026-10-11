@@ -37,7 +37,7 @@ const VIDEO_TOOLS = [
 ]
 
 const AUDIO_TOOLS = [
-  { id: 'normalize', label: 'נרמול עוצמה', icon: '🔊', ext: 'mp3', ffmpegArgs: ['-af', 'loudnorm', '-c:a', 'libmp3lame', '-q:a', '2'] },
+  { id: 'normalize', label: 'נרמול עוצמה', icon: '🔊', ext: 'mp3', ffmpegArgs: ['-af', 'dynaudnorm', '-c:a', 'libmp3lame', '-q:a', '2'] },
   { id: 'mono', label: 'סטריאו → מונו', icon: '🎙️', ext: 'mp3', ffmpegArgs: ['-ac', '1', '-c:a', 'libmp3lame', '-q:a', '2'] },
   { id: 'stereo', label: 'מונו → סטריאו', icon: '🎧', ext: 'mp3', ffmpegArgs: ['-ac', '2', '-c:a', 'libmp3lame', '-q:a', '2'] },
   { id: 'fadein', label: 'Fade In', icon: '📈', ext: 'mp3', ffmpegArgs: ['-af', 'afade=t=in:st=0:d=3', '-c:a', 'libmp3lame', '-q:a', '2'] },
@@ -149,7 +149,16 @@ export default function App() {
       const stillRunning = tasks.filter(t => t.id !== taskId && (t.status === 'pending' || t.status === 'running'))
       if (stillRunning.length === 0) {
         if (settings.playSoundOnComplete) {
-          try { new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAA...').play().catch(() => {}) } catch {}
+          try {
+            const ctx = new AudioContext()
+            const osc = ctx.createOscillator()
+            const gain = ctx.createGain()
+            osc.connect(gain); gain.connect(ctx.destination)
+            osc.frequency.value = 880
+            gain.gain.setValueAtTime(0.3, ctx.currentTime)
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8)
+            osc.start(); osc.stop(ctx.currentTime + 0.8)
+          } catch {}
         }
         if (settings.shutdownOnComplete) {
           window.electronAPI.shutdown()
