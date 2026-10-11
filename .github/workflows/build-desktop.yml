@@ -39,20 +39,20 @@ jobs:
       - name: Delete existing release and tag if present
         shell: bash
         run: |
-          gh release delete v1.9.0 --yes --cleanup-tag 2>/dev/null || true
+          gh release delete v2.0.0 --yes --cleanup-tag 2>/dev/null || true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v1.9.0
-          name: פורמט נקי v1.9.0
+          tag_name: v2.0.0
+          name: פורמט נקי v2.0.0
           draft: false
           prerelease: false
           files: desktop/dist/*.exe
           body: |
-            ## פורמט נקי v1.9.0 — Windows Installer
+            ## פורמט נקי v2.0.0 — Windows Installer
 
             הורד את קובץ ה-`.exe` למטה והתקן.
 

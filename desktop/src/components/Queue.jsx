@@ -238,7 +238,7 @@ export default function Queue({ onStart }) {
           </>
         )}
         <div style={{ flex: 1 }} />
-        <span style={{ color: '#888' }}>פורמט נקי v1.9.0 — 100% אופליין</span>
+        <span style={{ color: '#888' }}>פורמט נקי v2.0 — 100% אופליין</span>
       </div>
     </div>
   )
