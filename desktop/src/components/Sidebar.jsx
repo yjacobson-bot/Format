@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import { useStore } from '../store/useStore'
 import { VIDEO_FORMATS, AUDIO_FORMATS, IMAGE_FORMATS } from '../utils/formats'
-import { getFormatIcon } from '../utils/formatIcons'
 
 const DVD_FORMATS = [
   { id: 'iso_extract', label: 'חלץ מ-ISO', icon: '📀' },
@@ -28,36 +27,11 @@ const TOOLS_FORMATS = [
 ]
 
 const CATEGORIES = [
-  {
-    id: 'video', label: 'וידאו', sublabel: 'Video',
-    icon: '🎬', color: '#1a6bbf', color2: '#0d4a8a',
-    formats: VIDEO_FORMATS,
-    bgIcon: '▶',
-  },
-  {
-    id: 'audio', label: 'אודיו', sublabel: 'Audio',
-    icon: '🎵', color: '#1e8a3c', color2: '#0f5c27',
-    formats: AUDIO_FORMATS,
-    bgIcon: '♫',
-  },
-  {
-    id: 'image', label: 'תמונה', sublabel: 'Picture',
-    icon: '🖼️', color: '#7b2fa0', color2: '#511a6e',
-    formats: IMAGE_FORMATS,
-    bgIcon: '◼',
-  },
-  {
-    id: 'dvd', label: 'DVD / ISO', sublabel: 'DVD / CD',
-    icon: '📀', color: '#b81c1c', color2: '#7a0f0f',
-    formats: DVD_FORMATS,
-    bgIcon: '◎',
-  },
-  {
-    id: 'tools', label: 'כלים', sublabel: 'Tools',
-    icon: '🔧', color: '#c15f0a', color2: '#864008',
-    formats: TOOLS_FORMATS,
-    bgIcon: '⚙',
-  },
+  { id: 'video',  label: 'וידאו',    icon: '🎬', color: '#1565c0', formats: VIDEO_FORMATS },
+  { id: 'audio',  label: 'אודיו',   icon: '🎵', color: '#2e7d32', formats: AUDIO_FORMATS },
+  { id: 'image',  label: 'תמונה',   icon: '🖼️', color: '#6a1b9a', formats: IMAGE_FORMATS },
+  { id: 'dvd',    label: 'DVD / ISO', icon: '📀', color: '#c62828', formats: DVD_FORMATS },
+  { id: 'tools',  label: 'כלים',    icon: '🔧', color: '#e65100', formats: TOOLS_FORMATS },
 ]
 
 const MERGE_IDS = new Set(['merge', 'merge_audio'])
@@ -75,17 +49,20 @@ export default function Sidebar() {
     if (MERGE_IDS.has(fmt.id)) {
       openJoinWindow([], fmt.id === 'merge_audio' ? 'audio' : 'video')
     } else {
-      openSetupWindow(fmt, catId)
+      // Map tools to their functional category
+      const cat = catId === 'tools' || catId === 'dvd' ? catId : catId
+      openSetupWindow(fmt, cat)
     }
   }
 
   return (
     <aside style={{
-      width: 190, flexShrink: 0,
-      background: 'linear-gradient(180deg,#e8eaf2,#d8dce8)',
-      borderLeft: '1px solid #a0a8c0',
+      width: 200, flexShrink: 0,
+      background: '#f0f1f5',
+      borderLeft: '1px solid #b8bcc8',
       display: 'flex', flexDirection: 'column',
       userSelect: 'none', overflowY: 'auto',
+      boxShadow: 'inset -2px 0 4px rgba(0,0,0,0.06)',
     }}>
       {CATEGORIES.map(cat => {
         const isOpen = expanded === cat.id
@@ -93,102 +70,69 @@ export default function Sidebar() {
 
         return (
           <div key={cat.id}>
-            {/* Category button — Format Factory style: tall, colored when active */}
+            {/* Category header */}
             <button
               onClick={() => handleCatClick(cat.id)}
               style={{
-                width: '100%',
-                display: 'flex', alignItems: 'center', gap: 0,
-                padding: 0, cursor: 'pointer', border: 'none',
-                borderBottom: isActive ? `2px solid ${cat.color2}` : '1px solid #b0b8cc',
+                width: '100%', display: 'flex', alignItems: 'center', gap: 8,
+                padding: '8px 10px', cursor: 'pointer', border: 'none',
+                borderBottom: '1px solid #c8cdd8',
                 background: isActive
-                  ? `linear-gradient(180deg, ${cat.color} 0%, ${cat.color2} 100%)`
+                  ? `linear-gradient(135deg, ${cat.color}cc, ${cat.color})`
                   : isOpen
-                    ? `linear-gradient(180deg,#dce0ee,#cdd1e0)`
-                    : `linear-gradient(180deg,#e8eaf2,#d8dce8)`,
+                    ? '#e0e4ef'
+                    : 'linear-gradient(180deg,#f5f6fa,#e8e9f0)',
+                color: isActive ? '#fff' : '#222',
                 textAlign: 'right',
-                position: 'relative',
-                overflow: 'hidden',
-                minHeight: 52,
+                transition: 'background 0.15s',
               }}
-              onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = `linear-gradient(180deg,${cat.color}30,${cat.color}50)` }}
-              onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = isOpen ? `linear-gradient(180deg,#dce0ee,#cdd1e0)` : `linear-gradient(180deg,#e8eaf2,#d8dce8)` }}
+              onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = '#dce5f5' }}
+              onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = isOpen ? '#e0e4ef' : 'linear-gradient(180deg,#f5f6fa,#e8e9f0)' }}
             >
-              {/* Left accent bar */}
-              <div style={{
-                width: 4, alignSelf: 'stretch', flexShrink: 0,
-                background: isActive ? 'rgba(255,255,255,0.35)' : cat.color,
-                opacity: isActive ? 1 : 0.6,
-              }} />
-
-              {/* Icon area */}
-              <div style={{
-                width: 42, height: 52, flexShrink: 0,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 22,
-              }}>
-                {cat.icon}
-              </div>
-
-              {/* Label */}
-              <div style={{ flex: 1, padding: '6px 6px 6px 0', textAlign: 'right' }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: isActive ? '#fff' : '#1a2a4a', lineHeight: 1.2 }}>
-                  {cat.label}
-                </div>
-                <div style={{ fontSize: 9.5, color: isActive ? 'rgba(255,255,255,0.75)' : '#8090aa', marginTop: 1 }}>
-                  {cat.sublabel}
-                </div>
-              </div>
-
-              {/* Arrow */}
-              <div style={{
-                paddingLeft: 8, paddingRight: 4, fontSize: 9,
-                color: isActive ? 'rgba(255,255,255,0.7)' : '#8090aa',
-                transform: isOpen ? 'rotate(0deg)' : 'rotate(-90deg)',
-                transition: 'transform 0.2s',
-              }}>▼</div>
+              <span style={{ fontSize: 10, opacity: 0.7, flexShrink: 0, transition: 'transform 0.2s', transform: isOpen ? 'rotate(0deg)' : 'rotate(-90deg)' }}>▼</span>
+              <span style={{ flex: 1, fontSize: 12, fontWeight: 700, lineHeight: 1.2 }}>{cat.label}</span>
+              <span style={{ fontSize: 18, flexShrink: 0 }}>{cat.icon}</span>
             </button>
 
-            {/* Expanded sub-tiles */}
+            {/* Expanded format tiles */}
             {isOpen && (
               <div style={{
                 background: '#fff',
-                borderBottom: '1px solid #b8bfd0',
-                borderTop: '1px solid #d0d5e0',
-                padding: '6px 5px',
+                borderBottom: '1px solid #c8cdd8',
+                padding: '6px 6px',
                 display: 'flex', flexWrap: 'wrap', gap: 4,
               }}>
-                {cat.formats.map(fmt => {
-                  const iconUri = getFormatIcon(fmt, cat.id)
-                  return (
-                    <button
-                      key={fmt.id}
-                      onClick={() => handleFmtClick(fmt, cat.id)}
-                      title={fmt.label}
-                      style={{
-                        width: 54, height: 50,
-                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                        gap: 2, cursor: 'pointer', border: '1px solid #ccd0dc',
-                        background: '#f8f9fc',
-                        borderRadius: 3, padding: '3px 2px 2px', overflow: 'hidden',
-                        fontFamily: 'inherit',
-                      }}
-                      onMouseEnter={e => {
-                        e.currentTarget.style.background = `${cat.color}18`
-                        e.currentTarget.style.borderColor = cat.color
-                      }}
-                      onMouseLeave={e => {
-                        e.currentTarget.style.background = '#f8f9fc'
-                        e.currentTarget.style.borderColor = '#ccd0dc'
-                      }}
-                    >
-                      <img src={iconUri} alt={fmt.label} style={{ width: 28, height: 28, objectFit: 'contain' }} draggable={false} />
-                      <div style={{ fontSize: 7.5, color: '#333', textAlign: 'center', lineHeight: 1.1, overflow: 'hidden', maxWidth: 52, whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
-                        {fmt.label}
-                      </div>
-                    </button>
-                  )
-                })}
+                {cat.formats.map(fmt => (
+                  <button
+                    key={fmt.id}
+                    onClick={() => handleFmtClick(fmt, cat.id)}
+                    title={fmt.label}
+                    style={{
+                      width: 56, height: 52,
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                      gap: 2, cursor: 'pointer', border: '1px solid #d0d5e0',
+                      background: 'linear-gradient(180deg,#ffffff,#f0f3f8)',
+                      borderRadius: 4, fontSize: 9, fontWeight: 600, color: '#333',
+                      boxShadow: '0 1px 2px rgba(0,0,0,0.08)',
+                      padding: '2px',
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.background = `linear-gradient(180deg,${cat.color}22,${cat.color}44)`
+                      e.currentTarget.style.borderColor = cat.color
+                      e.currentTarget.style.color = cat.color
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.background = 'linear-gradient(180deg,#ffffff,#f0f3f8)'
+                      e.currentTarget.style.borderColor = '#d0d5e0'
+                      e.currentTarget.style.color = '#333'
+                    }}
+                  >
+                    <span style={{ fontSize: 16, lineHeight: 1 }}>{fmt.icon || '📄'}</span>
+                    <span style={{ fontSize: 8.5, textAlign: 'center', lineHeight: 1.1, overflow: 'hidden', maxWidth: 52, whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                      {fmt.label}
+                    </span>
+                  </button>
+                ))}
               </div>
             )}
           </div>
@@ -201,22 +145,18 @@ export default function Sidebar() {
       <button
         onClick={() => setActiveCategory('settings')}
         style={{
-          display: 'flex', alignItems: 'center', gap: 0,
-          padding: 0, cursor: 'pointer', border: 'none',
-          borderTop: '2px solid #9098b0',
+          display: 'flex', alignItems: 'center', gap: 8,
+          padding: '8px 10px', cursor: 'pointer', border: 'none',
+          borderTop: '2px solid #b8bcc8',
           background: activeCategory === 'settings'
-            ? 'linear-gradient(180deg,#455a64,#263238)'
-            : 'linear-gradient(180deg,#e8eaf2,#d8dce8)',
+            ? 'linear-gradient(135deg,#455a64,#263238)'
+            : 'linear-gradient(180deg,#f5f6fa,#e8e9f0)',
           color: activeCategory === 'settings' ? '#fff' : '#555',
-          width: '100%', minHeight: 46,
+          width: '100%',
         }}
       >
-        <div style={{ width: 4, alignSelf: 'stretch', background: '#607d8b', opacity: 0.7 }} />
-        <div style={{ width: 42, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>⚙️</div>
-        <div style={{ flex: 1, textAlign: 'right', paddingRight: 6 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, lineHeight: 1.2 }}>הגדרות</div>
-          <div style={{ fontSize: 9, opacity: 0.65, marginTop: 1 }}>Settings</div>
-        </div>
+        <span style={{ fontSize: 16 }}>⚙️</span>
+        <span style={{ fontSize: 11, fontWeight: 600 }}>הגדרות</span>
       </button>
     </aside>
   )
