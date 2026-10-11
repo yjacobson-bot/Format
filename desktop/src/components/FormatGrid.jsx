@@ -36,11 +36,84 @@ const FORMAT_LISTS = {
 }
 
 const CAT_META = {
-  video: { label: 'המרת וידאו',  color: '#1565c0', bg: '#e3f2fd', icon: '🎬' },
-  audio: { label: 'המרת אודיו',  color: '#2e7d32', bg: '#e8f5e9', icon: '🎵' },
-  image: { label: 'המרת תמונות', color: '#6a1b9a', bg: '#f3e5f5', icon: '🖼️' },
-  dvd:   { label: 'DVD / ISO',   color: '#c62828', bg: '#ffebee', icon: '📀' },
-  tools: { label: 'כלים',        color: '#e65100', bg: '#fff3e0', icon: '🔧' },
+  video: { label: 'המרת וידאו',  color: '#1a6bbf', color2: '#0d4a8a', accent: '#4da6ff', icon: '🎬' },
+  audio: { label: 'המרת אודיו',  color: '#1e8a3c', color2: '#0f5c27', accent: '#5dd97a', icon: '🎵' },
+  image: { label: 'המרת תמונות', color: '#7b2fa0', color2: '#511a6e', accent: '#c47ee8', icon: '🖼️' },
+  dvd:   { label: 'DVD / ISO',   color: '#b81c1c', color2: '#7a0f0f', accent: '#f07070', icon: '📀' },
+  tools: { label: 'כלים',        color: '#c15f0a', color2: '#864008', accent: '#f0a050', icon: '🔧' },
+}
+
+// Format icon tile — styled like a file-type badge (Format Factory style)
+function FormatTile({ fmt, meta, onClick }) {
+  const extText = fmt.ext ? fmt.ext.toUpperCase() : (fmt.label || '').toUpperCase().slice(0, 4)
+  const [hovered, setHovered] = React.useState(false)
+
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      title={fmt.label}
+      style={{
+        width: 90, height: 82,
+        display: 'flex', flexDirection: 'column',
+        cursor: 'pointer', padding: 0,
+        border: hovered ? `2px solid ${meta.color}` : '2px solid #c4c8d4',
+        borderRadius: 5,
+        background: hovered ? '#fff' : '#fdfdfd',
+        boxShadow: hovered
+          ? `0 4px 14px ${meta.color}55, 0 1px 3px rgba(0,0,0,0.12)`
+          : '0 2px 4px rgba(0,0,0,0.10)',
+        overflow: 'hidden',
+        transition: 'border-color 0.12s, box-shadow 0.12s',
+        fontFamily: 'inherit',
+      }}
+    >
+      {/* Colored "file icon" top — shows the extension */}
+      <div style={{
+        background: hovered
+          ? `linear-gradient(160deg, ${meta.color}, ${meta.color2})`
+          : `linear-gradient(160deg, ${meta.color}cc, ${meta.color2}cc)`,
+        height: 46,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        flexDirection: 'column',
+        transition: 'background 0.12s',
+        position: 'relative',
+      }}>
+        {/* Extension text — big bold */}
+        <span style={{
+          color: '#fff',
+          fontSize: extText.length <= 3 ? 20 : extText.length <= 4 ? 17 : 13,
+          fontWeight: 900,
+          letterSpacing: extText.length <= 3 ? 1 : 0,
+          fontFamily: 'Arial Black, Arial, sans-serif',
+          lineHeight: 1,
+          textShadow: '0 1px 3px rgba(0,0,0,0.4)',
+        }}>
+          {extText}
+        </span>
+        {/* Accent stripe at bottom */}
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: meta.accent, opacity: 0.7 }} />
+      </div>
+
+      {/* Label */}
+      <div style={{
+        flex: 1,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '2px 4px',
+        background: hovered ? `${meta.color}10` : '#f8f9fc',
+      }}>
+        <span style={{
+          fontSize: 9.5, fontWeight: 700, color: hovered ? meta.color : '#1a2a4a',
+          textAlign: 'center', lineHeight: 1.2,
+          overflow: 'hidden', maxWidth: 82,
+          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+        }}>
+          {fmt.label}
+        </span>
+      </div>
+    </button>
+  )
 }
 
 const MERGE_IDS = new Set(['merge', 'merge_audio'])
@@ -62,75 +135,49 @@ export default function FormatGrid() {
   }
 
   return (
-    <div style={{ flex: 1, overflow: 'auto', background: '#f8f9fc', display: 'flex', flexDirection: 'column' }}>
-      {/* Section header */}
+    <div style={{ flex: 1, overflow: 'auto', background: '#eef0f5', display: 'flex', flexDirection: 'column' }}>
+      {/* Section header — Windows XP style */}
       <div style={{
-        background: `linear-gradient(135deg, ${meta.color}dd, ${meta.color})`,
-        color: '#fff', padding: '8px 16px',
-        display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0,
-        boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
+        background: `linear-gradient(180deg, ${meta.color}f0 0%, ${meta.color2} 100%)`,
+        color: '#fff',
+        padding: '7px 14px',
+        display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0,
+        boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
+        borderBottom: `2px solid ${meta.color2}`,
       }}>
-        <span style={{ fontSize: 20 }}>{meta.icon}</span>
+        <span style={{ fontSize: 22 }}>{meta.icon}</span>
         <div>
-          <div style={{ fontSize: 13, fontWeight: 800 }}>{meta.label}</div>
-          <div style={{ fontSize: 10, opacity: 0.85 }}>בחר פורמט יעד — לחץ על אריח להמרה</div>
+          <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: 0.3 }}>{meta.label}</div>
+          <div style={{ fontSize: 9.5, opacity: 0.82, marginTop: 1 }}>לחץ על פורמט לבחירה · גרור קבצים לחלון</div>
         </div>
         <div style={{ flex: 1 }} />
-        <span style={{ fontSize: 11, opacity: 0.8, background: 'rgba(255,255,255,0.2)', padding: '2px 10px', borderRadius: 10 }}>
+        <span style={{
+          fontSize: 10, background: 'rgba(0,0,0,0.25)', padding: '2px 10px',
+          borderRadius: 10, border: '1px solid rgba(255,255,255,0.2)',
+        }}>
           {formats.length} פורמטים
         </span>
       </div>
 
-      {/* Format tiles */}
-      <div style={{ padding: '14px 16px', display: 'flex', flexWrap: 'wrap', gap: 8, alignContent: 'flex-start' }}>
+      {/* Format tiles grid */}
+      <div style={{ padding: '12px 14px 4px', display: 'flex', flexWrap: 'wrap', gap: 7, alignContent: 'flex-start' }}>
         {formats.map(fmt => (
-          <button
-            key={fmt.id}
-            onClick={() => handleClick(fmt)}
-            style={{
-              width: 100, height: 80,
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              gap: 5, cursor: 'pointer',
-              background: 'linear-gradient(180deg,#ffffff,#f0f3f8)',
-              border: `1px solid #c8d0e0`,
-              borderRadius: 6, color: '#222',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8)',
-              transition: 'all 0.12s',
-              fontFamily: 'inherit',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = `linear-gradient(180deg,${meta.bg},${meta.color}22)`
-              e.currentTarget.style.borderColor = meta.color
-              e.currentTarget.style.boxShadow = `0 4px 12px ${meta.color}44, inset 0 1px 0 rgba(255,255,255,0.8)`
-              e.currentTarget.style.transform = 'translateY(-1px)'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'linear-gradient(180deg,#ffffff,#f0f3f8)'
-              e.currentTarget.style.borderColor = '#c8d0e0'
-              e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8)'
-              e.currentTarget.style.transform = ''
-            }}
-            onMouseDown={e => e.currentTarget.style.transform = 'translateY(0px)'}
-            onMouseUp={e => e.currentTarget.style.transform = 'translateY(-1px)'}
-          >
-            <span style={{ fontSize: 26, lineHeight: 1 }}>{fmt.icon || '📄'}</span>
-            <span style={{ fontSize: 10, fontWeight: 700, color: '#1a2a4a', lineHeight: 1.2, textAlign: 'center', wordBreak: 'keep-all', hyphens: 'none', maxWidth: 86 }}>
-              {fmt.label}
-            </span>
-            {fmt.ext && <span style={{ fontSize: 9, color: meta.color, fontWeight: 600 }}>.{fmt.ext}</span>}
-          </button>
+          <FormatTile key={fmt.id} fmt={fmt} meta={meta} onClick={() => handleClick(fmt)} />
         ))}
       </div>
 
       {/* Drag hint */}
       <div style={{
-        margin: '0 16px 14px', padding: '12px 20px',
-        background: '#f0f4ff', border: '1px dashed #99aee8', borderRadius: 4,
-        fontSize: 11, color: '#4466aa', textAlign: 'center',
+        margin: '8px 14px 12px',
+        padding: '8px 16px',
+        background: '#e8ecf8',
+        border: '1px dashed #8899cc',
+        borderRadius: 3,
+        fontSize: 10.5, color: '#3355aa', textAlign: 'center',
         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
       }}>
-        <span style={{ fontSize: 16 }}>💡</span>
-        <span>גרור קבצים או תיקיות לחלון — התוכנה תזהה אוטומטית ותציג את כל אפשרויות ההמרה</span>
+        <span style={{ fontSize: 14 }}>💡</span>
+        <span>גרור קבצים או תיקיות לחלון — התוכנה תזהה אוטומטית ותציג אפשרויות המרה</span>
       </div>
     </div>
   )
