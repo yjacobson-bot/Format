@@ -2,11 +2,11 @@ import React from 'react'
 import { useStore } from '../store/useStore'
 
 const CATEGORIES = [
-  { id: 'video',    label: 'Video',    emoji: '🎬', color: '#dc2626', bg: '#fee2e2' },
-  { id: 'audio',    label: 'Audio',    emoji: '🎵', color: '#16a34a', bg: '#dcfce7' },
-  { id: 'image',    label: 'Picture',  emoji: '🖼️', color: '#1d4ed8', bg: '#dbeafe' },
+  { id: 'video',    label: 'וידאו',    emoji: '🎬', color: '#dc2626', bg: '#fee2e2' },
+  { id: 'audio',    label: 'אודיו',    emoji: '🎵', color: '#16a34a', bg: '#dcfce7' },
+  { id: 'image',    label: 'תמונה',   emoji: '🖼️', color: '#1d4ed8', bg: '#dbeafe' },
   { id: 'dvd',      label: 'DVD/ISO',  emoji: '📀', color: '#7c3aed', bg: '#ede9fe' },
-  { id: 'tools',    label: 'Tools',    emoji: '🔧', color: '#64748b', bg: '#f1f5f9' },
+  { id: 'tools',    label: 'כלים',    emoji: '🔧', color: '#64748b', bg: '#f1f5f9' },
 ]
 
 export default function Sidebar() {
@@ -76,7 +76,7 @@ export default function Sidebar() {
           }}
         >
           <span style={{ fontSize: 16 }}>⚙️</span>
-          <span style={{ fontSize: 9 }}>Settings</span>
+          <span style={{ fontSize: 9 }}>הגדרות</span>
         </button>
       </div>
     </aside>

@@ -40,11 +40,11 @@ export default function VideoPage() {
         padding: '5px 10px', display: 'flex', alignItems: 'center', gap: 8,
       }}>
         <span style={{ color: '#dc2626', fontSize: 16 }}>🎬</span>
-        <span style={{ fontWeight: 700, fontSize: 12, color: '#333' }}>Video Converter</span>
+        <span style={{ fontWeight: 700, fontSize: 12, color: '#333' }}>המרת וידאו</span>
         <div style={{ flex: 1 }} />
         {activeOutputFormat && (
           <>
-            <span style={{ fontSize: 11, color: '#555' }}>Selected:</span>
+            <span style={{ fontSize: 11, color: '#555' }}>נבחר:</span>
             <span style={{
               background: '#dc2626', color: '#fff',
               fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 2,
@@ -55,13 +55,13 @@ export default function VideoPage() {
               background: '#1a5fa8', color: '#fff', border: 'none', borderRadius: 2,
               padding: '3px 8px', fontSize: 11, cursor: 'pointer',
             }}>
-              ⚙ Output Settings
+              ⚙ הגדרות פלט
             </button>
             <button onClick={() => setActiveOutputFormat(null)} style={{
               background: '#e0e0e0', color: '#555', border: '1px solid #bbb', borderRadius: 2,
               padding: '3px 8px', fontSize: 11, cursor: 'pointer',
             }}>
-              ✕ Clear
+              ✕ נקה
             </button>
           </>
         )}
@@ -71,7 +71,7 @@ export default function VideoPage() {
         {/* Format grid - FF style */}
         <div style={{ marginBottom: 10 }}>
           <div style={{ fontSize: 11, color: '#666', marginBottom: 8, fontWeight: 600 }}>
-            Click a format to select output:
+            בחר פורמט פלט:
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {VIDEO_FORMATS.map(fmt => (
@@ -108,10 +108,10 @@ export default function VideoPage() {
           <div style={{ textAlign: 'center', color: '#888' }}>
             <div style={{ fontSize: 28, marginBottom: 6 }}>📁</div>
             <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 3 }}>
-              {activeOutputFormat ? `Add files to convert → ${activeOutputFormat.label}` : 'Select a format above first'}
+              {activeOutputFormat ? `הוסף קבצים להמרה → ${activeOutputFormat.label}` : 'בחר פורמט למעלה תחילה'}
             </div>
             <div style={{ fontSize: 11, color: '#aaa' }}>
-              Click here or drag & drop video files • Supports: {VIDEO_INPUT_EXTENSIONS.slice(0, 8).join(', ')}...
+              לחץ כאן או גרור קבצי וידאו • תומך: {VIDEO_INPUT_EXTENSIONS.slice(0, 8).join(', ')}...
             </div>
           </div>
         </div>

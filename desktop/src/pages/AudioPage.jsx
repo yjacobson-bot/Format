@@ -41,7 +41,7 @@ export default function AudioPage() {
         padding: '5px 10px', display: 'flex', alignItems: 'center', gap: 8,
       }}>
         <span style={{ color: '#16a34a', fontSize: 16 }}>🎵</span>
-        <span style={{ fontWeight: 700, fontSize: 12, color: '#333' }}>Audio Converter</span>
+        <span style={{ fontWeight: 700, fontSize: 12, color: '#333' }}>המרת אודיו</span>
 
         {/* Extract from video toggle */}
         <div style={{
@@ -51,7 +51,7 @@ export default function AudioPage() {
           <input type="checkbox" id="extractVid" checked={extractFromVideo}
             onChange={e => setExtractFromVideo(e.target.checked)} style={{ cursor: 'pointer' }} />
           <label htmlFor="extractVid" style={{ fontSize: 11, color: '#92400e', cursor: 'pointer', fontWeight: 600 }}>
-            🎬→🎵 Extract audio from video
+            🎬→🎵 חלץ אודיו מוידאו
           </label>
         </div>
 
@@ -66,13 +66,13 @@ export default function AudioPage() {
               background: '#1a5fa8', color: '#fff', border: 'none', borderRadius: 2,
               padding: '3px 8px', fontSize: 11, cursor: 'pointer',
             }}>
-              ⚙ Settings
+              ⚙ הגדרות פלט
             </button>
             <button onClick={() => setActiveOutputFormat(null)} style={{
               background: '#e0e0e0', color: '#555', border: '1px solid #bbb', borderRadius: 2,
               padding: '3px 8px', fontSize: 11, cursor: 'pointer',
             }}>
-              ✕ Clear
+              ✕ נקה
             </button>
           </>
         )}
@@ -80,7 +80,7 @@ export default function AudioPage() {
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '12px 12px 0' }}>
         <div style={{ fontSize: 11, color: '#666', marginBottom: 8, fontWeight: 600 }}>
-          Select output audio format:
+          בחר פורמט אודיו פלט:
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
           {AUDIO_FORMATS.map(fmt => (
@@ -111,11 +111,11 @@ export default function AudioPage() {
           <div style={{ fontSize: 28, marginBottom: 6 }}>🎵</div>
           <div style={{ fontSize: 12, fontWeight: 600, color: '#777', marginBottom: 3 }}>
             {activeOutputFormat
-              ? `Add ${extractFromVideo ? 'video' : 'audio'} files → ${activeOutputFormat.label}`
-              : 'Select a format above first'}
+              ? `הוסף קבצי ${extractFromVideo ? 'וידאו' : 'אודיו'} → ${activeOutputFormat.label}`
+              : 'בחר פורמט למעלה תחילה'}
           </div>
           <div style={{ fontSize: 11, color: '#aaa' }}>
-            Click here or drag & drop files
+            לחץ כאן או גרור קבצים
           </div>
         </div>
       </div>

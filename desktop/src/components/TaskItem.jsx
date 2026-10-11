@@ -8,10 +8,10 @@ function formatSize(bytes) {
 }
 
 const STATUS_STYLE = {
-  pending:  { bg: '#78350f', color: '#fcd34d', label: 'Waiting' },
-  running:  { bg: '#1e3a8a', color: '#93c5fd', label: 'Converting' },
-  done:     { bg: '#14532d', color: '#86efac', label: 'Done' },
-  error:    { bg: '#7f1d1d', color: '#fca5a5', label: 'Error' },
+  pending:  { bg: '#78350f', color: '#fcd34d', label: 'ממתין' },
+  running:  { bg: '#1e3a8a', color: '#93c5fd', label: 'ממיר' },
+  done:     { bg: '#14532d', color: '#86efac', label: 'הושלם' },
+  error:    { bg: '#7f1d1d', color: '#fca5a5', label: 'שגיאה' },
 }
 
 export default function TaskItem({ task, onRemove, onCancel, onOpenOutput }) {

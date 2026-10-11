@@ -7,8 +7,8 @@ const CAT_COLORS = {
 }
 
 const CAT_LABELS = {
-  video: 'Video Converter', audio: 'Audio Converter', image: 'Picture Converter',
-  dvd: 'DVD / ISO', tools: 'Tools', settings: 'Settings',
+  video: 'המרת וידאו', audio: 'המרת אודיו', image: 'המרת תמונות',
+  dvd: 'DVD / ISO', tools: 'כלים', settings: 'הגדרות',
 }
 
 export default function Header({ onStartAll, onClearAll }) {
@@ -29,7 +29,7 @@ export default function Header({ onStartAll, onClearAll }) {
           <span style={{ fontSize: 16 }}>🔄</span>
           <div>
             <div style={{ color: '#fff', fontWeight: 700, fontSize: 12, lineHeight: 1.2 }}>Format Factory</div>
-            <div style={{ color: '#9ec8f0', fontSize: 9, lineHeight: 1 }}>Free Multimedia Converter</div>
+            <div style={{ color: '#9ec8f0', fontSize: 9, lineHeight: 1 }}>ממיר מולטימדיה חינמי</div>
           </div>
         </div>
 
@@ -77,7 +77,7 @@ export default function Header({ onStartAll, onClearAll }) {
               fontSize: 11, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
             }}
           >
-            ▶ Start All ({stats.pending})
+            ▶ התחל הכל ({stats.pending})
           </button>
         )}
 
@@ -90,7 +90,7 @@ export default function Header({ onStartAll, onClearAll }) {
               padding: '3px 8px', fontSize: 11, cursor: 'pointer',
             }}
           >
-            Clear
+            נקה
           </button>
         )}
 
@@ -100,7 +100,7 @@ export default function Header({ onStartAll, onClearAll }) {
           border: '1px solid rgba(110,231,183,0.3)', borderRadius: 2,
           padding: '2px 6px', fontSize: 9, fontWeight: 600,
         }}>
-          ● OFFLINE
+          ● אופליין
         </div>
       </div>
     </header>

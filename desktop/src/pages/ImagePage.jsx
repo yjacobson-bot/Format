@@ -39,7 +39,7 @@ export default function ImagePage() {
         padding: '5px 10px', display: 'flex', alignItems: 'center', gap: 8,
       }}>
         <span style={{ color: '#1d4ed8', fontSize: 16 }}>🖼️</span>
-        <span style={{ fontWeight: 700, fontSize: 12, color: '#333' }}>Picture Converter</span>
+        <span style={{ fontWeight: 700, fontSize: 12, color: '#333' }}>המרת תמונות</span>
         <div style={{ flex: 1 }} />
         {activeOutputFormat && (
           <>
@@ -50,13 +50,13 @@ export default function ImagePage() {
               background: '#1a5fa8', color: '#fff', border: 'none', borderRadius: 2,
               padding: '3px 8px', fontSize: 11, cursor: 'pointer',
             }}>
-              ⚙ Settings
+              ⚙ הגדרות פלט
             </button>
             <button onClick={() => setActiveOutputFormat(null)} style={{
               background: '#e0e0e0', color: '#555', border: '1px solid #bbb', borderRadius: 2,
               padding: '3px 8px', fontSize: 11, cursor: 'pointer',
             }}>
-              ✕ Clear
+              ✕ נקה
             </button>
           </>
         )}
@@ -64,7 +64,7 @@ export default function ImagePage() {
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '12px 12px 0' }}>
         <div style={{ fontSize: 11, color: '#666', marginBottom: 8, fontWeight: 600 }}>
-          Select output image format:
+          בחר פורמט תמונה פלט:
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
           {IMAGE_FORMATS.map(fmt => (
@@ -93,10 +93,10 @@ export default function ImagePage() {
         >
           <div style={{ fontSize: 28, marginBottom: 6 }}>🖼️</div>
           <div style={{ fontSize: 12, fontWeight: 600, color: '#777', marginBottom: 3 }}>
-            {activeOutputFormat ? `Add image files → ${activeOutputFormat.label}` : 'Select a format above first'}
+            {activeOutputFormat ? `הוסף קבצי תמונה → ${activeOutputFormat.label}` : 'בחר פורמט למעלה תחילה'}
           </div>
           <div style={{ fontSize: 11, color: '#aaa' }}>
-            Click or drag & drop • Supports: JPG, PNG, BMP, GIF, WebP, TIFF...
+            לחץ כאן או גרור • תומך: JPG, PNG, BMP, GIF, WebP, TIFF...
           </div>
         </div>
       </div>

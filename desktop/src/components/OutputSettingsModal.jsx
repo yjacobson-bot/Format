@@ -67,7 +67,7 @@ export default function OutputSettingsModal({ category, format, settings, onChan
       <div className="bg-white rounded-xl shadow-2xl w-[560px] max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between px-5 py-4 border-b">
           <h2 className="font-bold text-gray-800">
-            Output Settings — {format?.label}
+            הגדרות פלט — {format?.label}
           </h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
         </div>
@@ -80,7 +80,7 @@ export default function OutputSettingsModal({ category, format, settings, onChan
               className={`px-4 py-2.5 text-sm font-medium capitalize transition-colors border-b-2 -mb-px
                 ${tab === t ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
             >
-              {t}
+              {t === 'video' ? 'וידאו' : t === 'audio' ? 'אודיו' : t === 'trim' ? 'חיתוך' : t === 'image' ? 'תמונה' : t === 'presets' ? 'פרסטים' : t}
             </button>
           ))}
         </div>
@@ -88,15 +88,15 @@ export default function OutputSettingsModal({ category, format, settings, onChan
         <div className="overflow-y-auto flex-1 px-5 py-4 space-y-4">
           {tab === 'video' && (
             <>
-              <SelectField label="Resolution" value={settings.resolution} onChange={v => onChange({ ...settings, resolution: v })} options={RESOLUTIONS} />
-              <SelectField label="Video Codec" value={settings.videoCodec} onChange={v => onChange({ ...settings, videoCodec: v })} options={VIDEO_CODECS} />
-              <SelectField label="Video Bitrate" value={settings.videoBitrate} onChange={v => onChange({ ...settings, videoBitrate: v })} options={VIDEO_BITRATES} />
-              <SelectField label="Frame Rate" value={settings.fps} onChange={v => onChange({ ...settings, fps: v })} options={FRAMERATES} />
+              <SelectField label="רזולוציה" value={settings.resolution} onChange={v => onChange({ ...settings, resolution: v })} options={RESOLUTIONS} />
+              <SelectField label="קודק וידאו" value={settings.videoCodec} onChange={v => onChange({ ...settings, videoCodec: v })} options={VIDEO_CODECS} />
+              <SelectField label="קצב וידאו" value={settings.videoBitrate} onChange={v => onChange({ ...settings, videoBitrate: v })} options={VIDEO_BITRATES} />
+              <SelectField label="קצב פריימים" value={settings.fps} onChange={v => onChange({ ...settings, fps: v })} options={FRAMERATES} />
               <div className="grid grid-cols-3 gap-3">
                 {[null, 90, 180, 270].map(r => (
                   <button key={r} onClick={() => onChange({ ...settings, rotate: r })}
                     className={`py-2 text-sm rounded border transition-colors ${settings.rotate === r ? 'bg-blue-500 text-white border-blue-500' : 'bg-white text-gray-600 border-gray-300 hover:border-blue-300'}`}>
-                    {r === null ? 'No rotation' : `Rotate ${r}°`}
+                    {r === null ? 'ללא סיבוב' : `סובב ${r}°`}
                   </button>
                 ))}
               </div>
@@ -105,36 +105,36 @@ export default function OutputSettingsModal({ category, format, settings, onChan
 
           {tab === 'audio' && (
             <>
-              <SelectField label="Audio Codec" value={settings.audioCodec} onChange={v => onChange({ ...settings, audioCodec: v })} options={AUDIO_CODECS} />
-              <SelectField label="Audio Bitrate" value={settings.audioBitrate} onChange={v => onChange({ ...settings, audioBitrate: v })} options={AUDIO_BITRATES} />
-              <SelectField label="Sample Rate" value={settings.sampleRate} onChange={v => onChange({ ...settings, sampleRate: v })} options={SAMPLE_RATES} />
-              <SelectField label="Channels" value={settings.channels} onChange={v => onChange({ ...settings, channels: v })} options={AUDIO_CHANNELS} />
+              <SelectField label="קודק אודיו" value={settings.audioCodec} onChange={v => onChange({ ...settings, audioCodec: v })} options={AUDIO_CODECS} />
+              <SelectField label="קצב אודיו" value={settings.audioBitrate} onChange={v => onChange({ ...settings, audioBitrate: v })} options={AUDIO_BITRATES} />
+              <SelectField label="קצב דגימה" value={settings.sampleRate} onChange={v => onChange({ ...settings, sampleRate: v })} options={SAMPLE_RATES} />
+              <SelectField label="ערוצים" value={settings.channels} onChange={v => onChange({ ...settings, channels: v })} options={AUDIO_CHANNELS} />
               <div className="flex items-center gap-2">
                 <input type="checkbox" id="normalize" checked={!!settings.normalize} onChange={e => onChange({ ...settings, normalize: e.target.checked })} />
-                <label htmlFor="normalize" className="text-sm text-gray-700">Normalize audio loudness</label>
+                <label htmlFor="normalize" className="text-sm text-gray-700">נרמל עוצמת אודיו</label>
               </div>
             </>
           )}
 
           {tab === 'trim' && (
             <>
-              <InputField label="Start time (seconds)" value={settings.trim?.start} onChange={v => onChange({ ...settings, trim: { ...settings.trim, start: v ? parseFloat(v) : null } })} placeholder="e.g. 10.5" type="number" />
-              <InputField label="End time (seconds)" value={settings.trim?.end} onChange={v => onChange({ ...settings, trim: { ...settings.trim, end: v ? parseFloat(v) : null } })} placeholder="e.g. 60.0" type="number" />
+              <InputField label="זמן התחלה (שניות)" value={settings.trim?.start} onChange={v => onChange({ ...settings, trim: { ...settings.trim, start: v ? parseFloat(v) : null } })} placeholder="לדוג' 10.5" type="number" />
+              <InputField label="זמן סיום (שניות)" value={settings.trim?.end} onChange={v => onChange({ ...settings, trim: { ...settings.trim, end: v ? parseFloat(v) : null } })} placeholder="לדוג' 60.0" type="number" />
             </>
           )}
 
           {tab === 'image' && (
             <>
-              <InputField label="Width (px, leave blank to auto)" value={settings.width} onChange={v => onChange({ ...settings, width: v })} placeholder="auto" type="number" />
-              <InputField label="Height (px, leave blank to auto)" value={settings.height} onChange={v => onChange({ ...settings, height: v })} placeholder="auto" type="number" />
-              <InputField label="Quality (1-100, JPG/WebP)" value={settings.quality} onChange={v => onChange({ ...settings, quality: v })} placeholder="85" type="number" />
+              <InputField label="רוחב (פיקסל, השאר ריק לאוטומטי)" value={settings.width} onChange={v => onChange({ ...settings, width: v })} placeholder="אוטו" type="number" />
+              <InputField label="גובה (פיקסל, השאר ריק לאוטומטי)" value={settings.height} onChange={v => onChange({ ...settings, height: v })} placeholder="אוטו" type="number" />
+              <InputField label="איכות (1-100, JPG/WebP)" value={settings.quality} onChange={v => onChange({ ...settings, quality: v })} placeholder="85" type="number" />
               <div className="flex items-center gap-2">
                 <input type="checkbox" id="keepAspect" checked={settings.keepAspect !== false} onChange={e => onChange({ ...settings, keepAspect: e.target.checked })} />
-                <label htmlFor="keepAspect" className="text-sm text-gray-700">Keep aspect ratio</label>
+                <label htmlFor="keepAspect" className="text-sm text-gray-700">שמור יחס גובה-רוחב</label>
               </div>
               <div className="flex items-center gap-2">
                 <input type="checkbox" id="grayscale" checked={!!settings.grayscale} onChange={e => onChange({ ...settings, grayscale: e.target.checked })} />
-                <label htmlFor="grayscale" className="text-sm text-gray-700">Convert to grayscale</label>
+                <label htmlFor="grayscale" className="text-sm text-gray-700">המר לגווני אפור</label>
               </div>
             </>
           )}
@@ -142,7 +142,7 @@ export default function OutputSettingsModal({ category, format, settings, onChan
           {tab === 'presets' && (
             <div className="space-y-4">
               <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-2">Device Presets</h3>
+                <h3 className="text-sm font-semibold text-gray-700 mb-2">פרסטים למכשירים</h3>
                 <div className="grid grid-cols-2 gap-2">
                   {DEVICE_PRESETS.map(preset => (
                     <button key={preset.id} onClick={() => applyDevicePreset(preset)}
@@ -154,7 +154,7 @@ export default function OutputSettingsModal({ category, format, settings, onChan
                 </div>
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-2">Quality Presets</h3>
+                <h3 className="text-sm font-semibold text-gray-700 mb-2">פרסטים לאיכות</h3>
                 <div className="grid grid-cols-2 gap-2">
                   {Object.entries(PRESETS.video || {}).map(([id, preset]) => (
                     <button key={id} onClick={() => applyPreset(id)}
@@ -170,12 +170,12 @@ export default function OutputSettingsModal({ category, format, settings, onChan
 
         <div className="px-5 py-4 border-t bg-gray-50 rounded-b-xl">
           <div className="flex items-center gap-2 mb-3">
-            <label className="text-xs font-medium text-gray-600 shrink-0">Output folder:</label>
+            <label className="text-xs font-medium text-gray-600 shrink-0">תיקיית פלט:</label>
             <input
               type="text"
               value={outputDir}
               onChange={e => onOutputDirChange(e.target.value)}
-              placeholder="Same as source file"
+              placeholder="זהה לקובץ המקור"
               className="flex-1 text-xs border border-gray-300 rounded px-2 py-1.5 focus:border-blue-400 focus:outline-none"
             />
             <button
@@ -185,15 +185,15 @@ export default function OutputSettingsModal({ category, format, settings, onChan
               }}
               className="text-xs bg-gray-200 hover:bg-gray-300 px-2 py-1.5 rounded transition-colors"
             >
-              Browse
+              עיון
             </button>
           </div>
           <div className="flex gap-2 justify-end">
             <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors">
-              Cancel
+              ביטול
             </button>
             <button onClick={onApply} className="px-4 py-2 text-sm text-white bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors font-medium">
-              Apply Settings
+              החל הגדרות
             </button>
           </div>
         </div>

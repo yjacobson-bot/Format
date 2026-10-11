@@ -62,7 +62,7 @@ export default function FormatCard({ format, category, onSelect }) {
       <span style={{ fontSize: 26, lineHeight: 1 }}>{format.icon}</span>
 
       {/* "All to" label */}
-      <span style={{ fontSize: 9, color: '#888', lineHeight: 1, marginTop: 2 }}>All to</span>
+      <span style={{ fontSize: 9, color: '#888', lineHeight: 1, marginTop: 2 }}>המר ל</span>
 
       {/* Format name - bold */}
       <span style={{

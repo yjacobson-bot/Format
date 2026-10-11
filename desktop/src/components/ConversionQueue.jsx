@@ -27,17 +27,17 @@ export default function ConversionQueue({ onStartAll }) {
         borderBottom: '1px solid #444',
       }}>
         <span style={{ color: '#aaa', fontSize: 11, fontWeight: 700, letterSpacing: 0.5 }}>
-          OUTPUT QUEUE
+          תור המרות
         </span>
 
         {stats.total > 0 && (
           <div style={{ display: 'flex', gap: 5, marginLeft: 4 }}>
             {[
-              { label: `${stats.total} total`, bg: '#444', color: '#ccc' },
-              stats.running > 0 && { label: `${stats.running} running`, bg: '#1d4ed8', color: '#fff' },
-              stats.done > 0 && { label: `${stats.done} done`, bg: '#16a34a', color: '#fff' },
-              stats.pending > 0 && { label: `${stats.pending} waiting`, bg: '#92400e', color: '#fcd34d' },
-              stats.error > 0 && { label: `${stats.error} error`, bg: '#dc2626', color: '#fff' },
+              { label: `${stats.total} סה"כ`, bg: '#444', color: '#ccc' },
+              stats.running > 0 && { label: `${stats.running} פועל`, bg: '#1d4ed8', color: '#fff' },
+              stats.done > 0 && { label: `${stats.done} הושלם`, bg: '#16a34a', color: '#fff' },
+              stats.pending > 0 && { label: `${stats.pending} ממתין`, bg: '#92400e', color: '#fcd34d' },
+              stats.error > 0 && { label: `${stats.error} שגיאה`, bg: '#dc2626', color: '#fff' },
             ].filter(Boolean).map((s, i) => (
               <span key={i} style={{
                 background: s.bg, color: s.color,
@@ -55,7 +55,7 @@ export default function ConversionQueue({ onStartAll }) {
             border: '1px solid #14532d', borderRadius: 2, padding: '2px 8px',
             fontSize: 10, fontWeight: 700, cursor: 'pointer',
           }}>
-            ▶ Start All
+            ▶ התחל הכל
           </button>
         )}
         {stats.done > 0 && (
@@ -64,7 +64,7 @@ export default function ConversionQueue({ onStartAll }) {
             border: '1px solid #555', borderRadius: 2, padding: '2px 8px',
             fontSize: 10, cursor: 'pointer',
           }}>
-            Clear done
+            נקה שהושלמו
           </button>
         )}
       </div>
@@ -73,7 +73,7 @@ export default function ConversionQueue({ onStartAll }) {
       <div style={{ flex: 1, overflowY: 'auto', padding: '4px 6px', display: 'flex', flexDirection: 'column', gap: 2 }}>
         {tasks.length === 0 ? (
           <div style={{ color: '#666', fontSize: 12, textAlign: 'center', marginTop: 24 }}>
-            Queue is empty — select a format above, then add files
+            התור ריק — בחר פורמט למעלה ואז הוסף קבצים
           </div>
         ) : (
           tasks.map(task => (

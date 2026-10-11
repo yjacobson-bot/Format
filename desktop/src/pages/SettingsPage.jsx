@@ -12,24 +12,24 @@ export default function SettingsPage() {
         padding: '5px 10px', display: 'flex', alignItems: 'center', gap: 8,
       }}>
         <span style={{ color: '#64748b', fontSize: 16 }}>⚙️</span>
-        <span style={{ fontWeight: 700, fontSize: 12, color: '#333' }}>Settings</span>
+        <span style={{ fontWeight: 700, fontSize: 12, color: '#333' }}>הגדרות</span>
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '12px 12px 0' }}>
         {/* Main settings box */}
         <div style={{ background: '#f8f8f8', border: '1px solid #ccc', borderRadius: 2, padding: 10, marginBottom: 8 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: '#555', marginBottom: 10, borderBottom: '1px solid #ddd', paddingBottom: 5 }}>
-            General Options
+            אפשרויות כלליות
           </div>
 
           <div style={{ marginBottom: 10 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#555', marginBottom: 4 }}>Default Output Folder</div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#555', marginBottom: 4 }}>תיקיית פלט ברירת מחדל</div>
             <div style={{ display: 'flex', gap: 4 }}>
               <input
                 type="text"
                 value={settings.outputDir}
                 onChange={e => updateSettings({ outputDir: e.target.value })}
-                placeholder="Same as source file"
+                placeholder="זהה לקובץ המקור"
                 style={{ flex: 1, fontSize: 11, border: '1px solid #bbb', borderRadius: 2, padding: '3px 6px', background: '#fff' }}
               />
               <button
@@ -42,13 +42,13 @@ export default function SettingsPage() {
                   padding: '3px 10px', fontSize: 11, cursor: 'pointer',
                 }}
               >
-                Browse
+                עיון
               </button>
             </div>
           </div>
 
           <div style={{ marginBottom: 10 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#555', marginBottom: 4 }}>Max Concurrent Conversions</div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#555', marginBottom: 4 }}>מקסימום המרות במקביל</div>
             <select
               value={settings.maxConcurrent}
               onChange={e => updateSettings({ maxConcurrent: parseInt(e.target.value) })}
@@ -58,13 +58,13 @@ export default function SettingsPage() {
                 <option key={n} value={n}>{n}</option>
               ))}
             </select>
-            <span style={{ fontSize: 10, color: '#999', marginLeft: 8 }}>files converted simultaneously</span>
+            <span style={{ fontSize: 10, color: '#999', marginLeft: 8 }}>קבצים בו-זמנית</span>
           </div>
 
-          <div style={{ fontSize: 11, fontWeight: 600, color: '#555', marginBottom: 6 }}>Options</div>
+          <div style={{ fontSize: 11, fontWeight: 600, color: '#555', marginBottom: 6 }}>אפשרויות</div>
           {[
-            { key: 'deleteSourceAfter', label: 'Delete source file after successful conversion', danger: true },
-            { key: 'showNotifications', label: 'Show desktop notifications when conversions complete', danger: false },
+            { key: 'deleteSourceAfter', label: 'מחק קובץ מקור לאחר המרה מוצלחת', danger: true },
+            { key: 'showNotifications', label: 'הצג התראות שולחן עבודה עם סיום המרות', danger: false },
           ].map(opt => (
             <div key={opt.key} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
               <input
@@ -89,11 +89,11 @@ export default function SettingsPage() {
           background: '#f0f4ff', border: '1px solid #c7d2fe', borderRadius: 2, padding: 10,
           borderLeft: '3px solid #1d4ed8',
         }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#1d4ed8', marginBottom: 4 }}>About Format Factory</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#1d4ed8', marginBottom: 4 }}>אודות Format Factory</div>
           <div style={{ fontSize: 11, color: '#3730a3', lineHeight: 1.6 }}>
-            Open-source multimedia converter powered by <strong>FFmpeg</strong>.<br />
-            Supports conversion of video, audio, and image files to dozens of formats.<br />
-            100% offline — no telemetry, no ads, no cloud uploads.
+            ממיר מולטימדיה קוד פתוח המופעל על ידי <strong>FFmpeg</strong>.<br />
+            תומך בהמרת קבצי וידאו, אודיו ותמונות לעשרות פורמטים.<br />
+            100% אופליין — ללא טלמטריה, ללא פרסומות, ללא העלאות לענן.
           </div>
         </div>
       </div>
