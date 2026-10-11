@@ -39,30 +39,29 @@ jobs:
       - name: Delete existing release and tag if present
         shell: bash
         run: |
-          gh release delete v2.0.3 --yes --cleanup-tag 2>/dev/null || true
+          gh release delete v2.1.0 --yes --cleanup-tag 2>/dev/null || true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v2.0.3
-          name: פורמט נקי v2.0.3
+          tag_name: v2.1.0
+          name: פורמט נקי v2.1.0
           draft: false
           prerelease: false
           files: desktop/dist/*.exe
           body: |
-            ## פורמט נקי v2.0.3 — Windows Installer
+            ## פורמט נקי v2.1.0 — Windows Installer
 
             הורד את קובץ ה-`.exe` למטה והתקן.
 
-            ### חדש בגירסה זו
-            - עיצוב מקצועי: אייקוני SVG במקום אמוג'ים בכל הממשק
+            ### חדש בגירסה 2.1
+            - מיזוג אודיו בו-זמני: שני שירים/רצועות מעורבים יחד עם בקרת עוצמה לכל רצועה (0–200%)
             - שליטה בשרשורי מעבד: אופטימלי / מקסימלי / ידני
             - ממשק GPU משופר: בחירת כרטיס גרפי ויזואלית וברורה
+            - עיצוב מקצועי: אייקוני SVG במקום אמוג'ים בכל הממשק
             - חלוקת שרשורים פרופורציונלית בין המרות מקביליות
-            - כפתור השהה/המשך לתור ההמרות
-            - אזהרה לפני סגירה כשיש משימות פעילות
 
             ### כללי
             - 🎬 המרת וידאו, 🎵 אודיו, 🖼️ תמונות, 📀 DVD/ISO
