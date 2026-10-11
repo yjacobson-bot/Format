@@ -284,6 +284,31 @@ export async function getVideoDuration(filePath) {
   return meta.format?.duration || 0
 }
 
+export async function mixAudio(inputPaths, outputPath, weights, settings, onProgress) {
+  return new Promise((resolve, reject) => {
+    let cmd = ffmpeg()
+    inputPaths.forEach(p => { cmd = cmd.input(p) })
+
+    const n = inputPaths.length
+    const w = weights && weights.length === n
+      ? weights.map(v => (parseFloat(v) || 1).toFixed(2)).join(' ')
+      : Array(n).fill('1').join(' ')
+
+    const audioCodec = settings?.audioCodec && settings.audioCodec !== 'copy' ? settings.audioCodec : 'libmp3lame'
+    const audioBitrate = settings?.audioBitrate && settings.audioBitrate !== 'copy' ? settings.audioBitrate : '192k'
+
+    cmd
+      .complexFilter([`amix=inputs=${n}:duration=longest:normalize=0:weights=${w}`])
+      .audioCodec(audioCodec)
+      .audioBitrate(audioBitrate)
+      .output(outputPath)
+      .on('progress', p => onProgress && onProgress(p.percent || 0))
+      .on('end', resolve)
+      .on('error', reject)
+      .run()
+  })
+}
+
 export async function mergeVideos(inputPaths, outputPath, settings, onProgress) {
   return new Promise((resolve, reject) => {
     const listFile = outputPath + '.txt'

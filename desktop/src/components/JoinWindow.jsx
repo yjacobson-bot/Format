@@ -264,10 +264,15 @@ export default function JoinWindow() {
   const [dragOverIdx, setDragOverIdx] = useState(null)
   const [previewIdx, setPreviewIdx] = useState(null)
   const [fileTrimMap, setFileTrimMap] = useState({}) // path → {start, end}
+  const [mergeMode, setMergeMode] = useState('concat') // 'concat' | 'mix'
+  const [weights, setWeights] = useState({}) // path → 0–200 (percent)
 
   if (!joinWindow) return null
   const { files, settings, kind = 'video' } = joinWindow
   const isAudio = kind === 'audio'
+
+  function getWeight(path) { return weights[path] ?? 100 }
+  function setWeight(path, val) { setWeights(prev => ({ ...prev, [path]: val })) }
 
   async function handleAddFiles() {
     const picked = await window.electronAPI?.openFiles({ multiple: true })
@@ -296,11 +301,13 @@ export default function JoinWindow() {
   function handleOk() {
     if (files.length < 2) return
     const s = settings || {}
-    // Attach per-file trim info into settings
+    const weightsArr = files.map(f => (getWeight(f.path) / 100).toFixed(2))
     addJoinTask(files, s.ext || (isAudio ? 'mp3' : 'mp4'), {
       ...s,
       joinKind: kind,
       fileTrimMap,
+      mergeMode: isAudio ? mergeMode : 'concat',
+      weights: weightsArr,
     })
     closeJoinWindow()
   }
@@ -342,7 +349,7 @@ export default function JoinWindow() {
               background: 'linear-gradient(180deg,#f8f9fc,#e4e8f0)', border: '1px solid #a0a8bc',
               borderRadius: 3, fontWeight: 600,
             }}>📂 הוסף קובץ</button>
-            <button onClick={() => { updateJoinFiles([]); setPreviewIdx(null); setFileTrimMap({}) }} style={{
+            <button onClick={() => { updateJoinFiles([]); setPreviewIdx(null); setFileTrimMap({}); setWeights({}) }} style={{
               fontSize: 11, padding: '4px 12px', cursor: 'pointer',
               background: 'linear-gradient(180deg,#f8f9fc,#e4e8f0)', border: '1px solid #a0a8bc',
               borderRadius: 3,
@@ -355,6 +362,33 @@ export default function JoinWindow() {
               }}>סגור תצוגה מקדימה</button>
             )}
           </div>
+
+          {/* Mode toggle — audio only */}
+          {isAudio && (
+            <div style={{ display: 'flex', gap: 0, border: '1px solid #b0bcd0', borderRadius: 5, overflow: 'hidden', alignSelf: 'flex-start' }}>
+              {[
+                { value: 'concat', label: 'רצף', sub: 'A → B → C', icon: '▶▶' },
+                { value: 'mix',    label: 'מיקס', sub: 'A + B + C', icon: '🎚' },
+              ].map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => setMergeMode(opt.value)}
+                  style={{
+                    padding: '5px 16px', border: 'none', cursor: 'pointer', fontSize: 11,
+                    fontWeight: 700, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1,
+                    background: mergeMode === opt.value
+                      ? `linear-gradient(180deg,${ACCENT}cc,${ACCENT})`
+                      : 'linear-gradient(180deg,#f5f6fa,#e8e9f0)',
+                    color: mergeMode === opt.value ? '#fff' : '#445',
+                    borderLeft: opt.value === 'mix' ? '1px solid #b0bcd0' : 'none',
+                  }}
+                >
+                  <span>{opt.icon} {opt.label}</span>
+                  <span style={{ fontSize: 9, opacity: .75, fontWeight: 400 }}>{opt.sub}</span>
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* File list */}
           <div
@@ -373,6 +407,9 @@ export default function JoinWindow() {
                     <th style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700, width: 30, color: '#445' }}>#</th>
                     <th style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700, color: '#445' }}>שם קובץ</th>
                     <th style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700, width: 70, color: '#445' }}>גודל</th>
+                    {isAudio && mergeMode === 'mix' && (
+                      <th style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700, width: 130, color: '#445' }}>עוצמה</th>
+                    )}
                     <th style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700, width: 80, color: '#445' }}>חיתוך</th>
                     <th style={{ padding: '4px 4px', width: 24 }}></th>
                   </tr>
@@ -406,6 +443,21 @@ export default function JoinWindow() {
                           <span title={f.path}>{f.name}</span>
                         </td>
                         <td style={{ padding: '3px 8px', color: '#888' }}>{fmtSize(f.size)}</td>
+                        {isAudio && mergeMode === 'mix' && (
+                          <td style={{ padding: '3px 8px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                              <input
+                                type="range" min={0} max={200} step={5}
+                                value={getWeight(f.path)}
+                                onChange={e => setWeight(f.path, parseInt(e.target.value))}
+                                style={{ width: 70, accentColor: ACCENT }}
+                              />
+                              <span style={{ fontSize: 10, color: ACCENT, fontWeight: 700, minWidth: 34, fontVariantNumeric: 'tabular-nums' }}>
+                                {getWeight(f.path)}%
+                              </span>
+                            </div>
+                          </td>
+                        )}
                         <td style={{ padding: '3px 6px' }}>
                           <button
                             onClick={() => setPreviewIdx(previewIdx === i ? null : i)}
@@ -511,7 +563,9 @@ export default function JoinWindow() {
 
           {/* Info tip */}
           <div style={{ fontSize: 10, color: '#886633', background: '#fffbe6', border: '1px solid #ffe58f', borderRadius: 3, padding: '5px 10px' }}>
-            💡 הקבצים יחוברו בסדר הרשימה. לחץ ✂ חתוך על קובץ לחיתוך מדויק לפני המיזוג.
+            {isAudio && mergeMode === 'mix'
+              ? '💡 כל הרצועות ישמעו בו-זמנית. שנה עוצמה (0–200%) לכל רצועה בנפרד. 100% = עוצמה מקורית.'
+              : '💡 הקבצים יחוברו בסדר הרשימה. לחץ ✂ חתוך על קובץ לחיתוך מדויק לפני המיזוג.'}
           </div>
         </div>
 
@@ -529,7 +583,7 @@ export default function JoinWindow() {
             color: '#fff', border: '1px solid', borderColor: files.length >= 2 ? (isAudio ? '#1a5c22' : '#0a3080') : '#aaa',
             borderRadius: 4, boxShadow: files.length >= 2 ? '0 2px 6px rgba(0,0,0,0.2)' : 'none',
           }}>
-            {isAudio ? '🎵' : '🔗'} מזג קבצים
+            {isAudio && mergeMode === 'mix' ? '🎚 מיקס אודיו' : isAudio ? '🎵 מזג קבצים' : '🔗 מזג קבצים'}
           </button>
           <button onClick={closeJoinWindow} style={{
             padding: '6px 20px', fontSize: 12, cursor: 'pointer',

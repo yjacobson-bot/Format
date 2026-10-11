@@ -9,6 +9,7 @@ import {
   cancelAll,
   buildOutputPath,
   mergeVideos,
+  mixAudio,
   splitVideo,
   addWatermark,
   scanDirectory,
@@ -96,9 +97,15 @@ export function registerHandlers(mainWindow) {
 
   ipcMain.handle('tools:mergeVideos', async (_, { inputPaths, outputPath, settings }) => {
     try {
-      await mergeVideos(inputPaths, outputPath, settings, (percent) => {
-        mainWindow.webContents.send('tools:mergeProgress', { percent })
-      })
+      if (settings?.mergeMode === 'mix') {
+        await mixAudio(inputPaths, outputPath, settings.weights, settings, (percent) => {
+          mainWindow.webContents.send('tools:mergeProgress', { percent })
+        })
+      } else {
+        await mergeVideos(inputPaths, outputPath, settings, (percent) => {
+          mainWindow.webContents.send('tools:mergeProgress', { percent })
+        })
+      }
       return { success: true }
     } catch (err) {
       return { success: false, error: err.message }
