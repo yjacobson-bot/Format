@@ -1,6 +1,7 @@
 import React from 'react'
 import { useStore } from '../store/useStore'
 import { VIDEO_FORMATS, AUDIO_FORMATS, IMAGE_FORMATS } from '../utils/formats'
+import { getFormatIcon } from '../utils/formatIcons'
 
 const DVD_FORMATS = [
   { id: 'iso_extract', label: 'חלץ מ-ISO',  ext: 'mp4', icon: '📀', ffmpegArgs: ['-c:v', 'libx264', '-c:a', 'aac'] },
@@ -43,74 +44,53 @@ const CAT_META = {
   tools: { label: 'כלים',        color: '#c15f0a', color2: '#864008', accent: '#f0a050', icon: '🔧' },
 }
 
-// Format icon tile — styled like a file-type badge (Format Factory style)
-function FormatTile({ fmt, meta, onClick }) {
-  const extText = fmt.ext ? fmt.ext.toUpperCase() : (fmt.label || '').toUpperCase().slice(0, 4)
+// Format icon tile — Format Factory style with real SVG icons
+function FormatTile({ fmt, meta, category, onClick }) {
   const [hovered, setHovered] = React.useState(false)
+  const iconUri = getFormatIcon(fmt, category)
 
   return (
     <button
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      title={fmt.label}
+      title={`המר ל-${fmt.label}`}
       style={{
-        width: 90, height: 82,
+        width: 96, height: 90,
         display: 'flex', flexDirection: 'column',
         cursor: 'pointer', padding: 0,
-        border: hovered ? `2px solid ${meta.color}` : '2px solid #c4c8d4',
+        border: hovered ? `2px solid ${meta.color}` : '2px solid #c0c6d4',
         borderRadius: 5,
-        background: hovered ? '#fff' : '#fdfdfd',
+        background: hovered ? `${meta.color}12` : '#f5f6fa',
         boxShadow: hovered
-          ? `0 4px 14px ${meta.color}55, 0 1px 3px rgba(0,0,0,0.12)`
-          : '0 2px 4px rgba(0,0,0,0.10)',
+          ? `0 4px 14px ${meta.color}44, 0 1px 3px rgba(0,0,0,0.15)`
+          : '0 1px 4px rgba(0,0,0,0.13)',
         overflow: 'hidden',
-        transition: 'border-color 0.12s, box-shadow 0.12s',
+        transition: 'all 0.1s',
         fontFamily: 'inherit',
       }}
     >
-      {/* Colored "file icon" top — shows the extension */}
-      <div style={{
-        background: hovered
-          ? `linear-gradient(160deg, ${meta.color}, ${meta.color2})`
-          : `linear-gradient(160deg, ${meta.color}cc, ${meta.color2}cc)`,
-        height: 46,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        flexDirection: 'column',
-        transition: 'background 0.12s',
-        position: 'relative',
-      }}>
-        {/* Extension text — big bold */}
-        <span style={{
-          color: '#fff',
-          fontSize: extText.length <= 3 ? 20 : extText.length <= 4 ? 17 : 13,
-          fontWeight: 900,
-          letterSpacing: extText.length <= 3 ? 1 : 0,
-          fontFamily: 'Arial Black, Arial, sans-serif',
-          lineHeight: 1,
-          textShadow: '0 1px 3px rgba(0,0,0,0.4)',
-        }}>
-          {extText}
-        </span>
-        {/* Accent stripe at bottom */}
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: meta.accent, opacity: 0.7 }} />
+      {/* SVG Icon */}
+      <div style={{ height: 58, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px 4px 0' }}>
+        <img src={iconUri} alt={fmt.label} style={{ width: 52, height: 52, objectFit: 'contain', display: 'block' }} draggable={false} />
       </div>
 
       {/* Label */}
       <div style={{
         flex: 1,
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        padding: '2px 4px',
-        background: hovered ? `${meta.color}10` : '#f8f9fc',
+        padding: '0 4px 3px',
+        borderTop: hovered ? `1px solid ${meta.color}33` : '1px solid #e0e4ec',
+        background: hovered ? `${meta.color}10` : '#eef0f6',
       }}>
-        <span style={{ fontSize: 8.5, color: hovered ? meta.color : '#888', marginBottom: 1 }}>המר ל-</span>
         <span style={{
-          fontSize: 9.5, fontWeight: 700, color: hovered ? meta.color : '#1a2a4a',
-          textAlign: 'center', lineHeight: 1.2,
-          overflow: 'hidden', maxWidth: 82,
-          display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical',
+          fontSize: 9.5, fontWeight: 700,
+          color: hovered ? meta.color : '#1a2a4a',
+          textAlign: 'center', lineHeight: 1.3,
+          overflow: 'hidden', maxWidth: 88,
+          whiteSpace: 'nowrap', textOverflow: 'ellipsis',
         }}>
-          {fmt.label}
+          המר ל-{fmt.label}
         </span>
       </div>
     </button>
@@ -163,7 +143,7 @@ export default function FormatGrid() {
       {/* Format tiles grid */}
       <div style={{ padding: '12px 14px 4px', display: 'flex', flexWrap: 'wrap', gap: 7, alignContent: 'flex-start' }}>
         {formats.map(fmt => (
-          <FormatTile key={fmt.id} fmt={fmt} meta={meta} onClick={() => handleClick(fmt)} />
+          <FormatTile key={fmt.id} fmt={fmt} meta={meta} category={activeCategory} onClick={() => handleClick(fmt)} />
         ))}
       </div>
 

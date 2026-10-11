@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useStore } from '../store/useStore'
 import { VIDEO_FORMATS, AUDIO_FORMATS, IMAGE_FORMATS } from '../utils/formats'
+import { getFormatIcon } from '../utils/formatIcons'
 
 const DVD_FORMATS = [
   { id: 'iso_extract', label: 'חלץ מ-ISO', icon: '📀' },
@@ -158,53 +159,33 @@ export default function Sidebar() {
                 display: 'flex', flexWrap: 'wrap', gap: 4,
               }}>
                 {cat.formats.map(fmt => {
-                  const extText = fmt.ext ? fmt.ext.toUpperCase() : ''
+                  const iconUri = getFormatIcon(fmt, cat.id)
                   return (
                     <button
                       key={fmt.id}
                       onClick={() => handleFmtClick(fmt, cat.id)}
                       title={fmt.label}
                       style={{
-                        width: 52, height: 48,
+                        width: 54, height: 50,
                         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                        gap: 0, cursor: 'pointer', border: '1px solid #ccd0dc',
-                        background: 'linear-gradient(180deg,#f8f9fc,#eceef5)',
-                        borderRadius: 3, padding: 0, overflow: 'hidden',
+                        gap: 2, cursor: 'pointer', border: '1px solid #ccd0dc',
+                        background: '#f8f9fc',
+                        borderRadius: 3, padding: '3px 2px 2px', overflow: 'hidden',
                         fontFamily: 'inherit',
                       }}
                       onMouseEnter={e => {
-                        e.currentTarget.style.background = `linear-gradient(180deg,${cat.color}22,${cat.color}44)`
+                        e.currentTarget.style.background = `${cat.color}18`
                         e.currentTarget.style.borderColor = cat.color
                       }}
                       onMouseLeave={e => {
-                        e.currentTarget.style.background = 'linear-gradient(180deg,#f8f9fc,#eceef5)'
+                        e.currentTarget.style.background = '#f8f9fc'
                         e.currentTarget.style.borderColor = '#ccd0dc'
                       }}
                     >
-                      {extText ? (
-                        <>
-                          <div style={{
-                            width: '100%', height: 26,
-                            background: `linear-gradient(180deg,${cat.color}cc,${cat.color2}cc)`,
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: extText.length <= 3 ? 11 : 9.5,
-                            fontWeight: 900, color: '#fff', letterSpacing: 0,
-                            fontFamily: 'Arial Black, Arial, sans-serif',
-                          }}>
-                            {extText}
-                          </div>
-                          <div style={{ fontSize: 8, color: '#444', padding: '2px 2px 0', textAlign: 'center', lineHeight: 1.1, overflow: 'hidden', maxWidth: 50 }}>
-                            {fmt.label}
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <span style={{ fontSize: 15, lineHeight: 1 }}>{fmt.icon || '📄'}</span>
-                          <span style={{ fontSize: 7.5, textAlign: 'center', lineHeight: 1.1, overflow: 'hidden', maxWidth: 50, color: '#333' }}>
-                            {fmt.label}
-                          </span>
-                        </>
-                      )}
+                      <img src={iconUri} alt={fmt.label} style={{ width: 28, height: 28, objectFit: 'contain' }} draggable={false} />
+                      <div style={{ fontSize: 7.5, color: '#333', textAlign: 'center', lineHeight: 1.1, overflow: 'hidden', maxWidth: 52, whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                        {fmt.label}
+                      </div>
                     </button>
                   )
                 })}
