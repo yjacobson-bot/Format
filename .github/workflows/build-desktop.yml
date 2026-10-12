@@ -33,15 +33,25 @@ jobs:
           $installer = "$env:TEMP\lo_installer.exe"
           Write-Host "Downloading LibreOffice Portable..."
           Invoke-WebRequest -Uri $url -OutFile $installer -UseBasicParsing
-          Write-Host "Extracting..."
+          Write-Host "Download complete. Size: $((Get-Item $installer).Length / 1MB) MB"
           New-Item -ItemType Directory -Force -Path "resources" | Out-Null
-          & $installer /DESTINATION="$PWD\resources" /SILENT | Out-Null
-          Start-Sleep -Seconds 30
+          Write-Host "Extracting (this may take a few minutes)..."
+          $proc = Start-Process -FilePath $installer -ArgumentList "/DESTINATION=`"$PWD\resources`"", "/SILENT" -PassThru
+          # Wait up to 5 minutes for extraction
+          $proc | Wait-Process -Timeout 300
+          Write-Host "Extractor exited with code: $($proc.ExitCode)"
           # PortableApps extracts to resources\LibreOfficePortable — rename to libreoffice
           if (Test-Path "resources\LibreOfficePortable") {
             Rename-Item "resources\LibreOfficePortable" "libreoffice"
+            Write-Host "Renamed LibreOfficePortable -> libreoffice"
+          } elseif (Test-Path "resources\libreoffice") {
+            Write-Host "Already at resources\libreoffice"
+          } else {
+            Write-Host "Contents of resources:"
+            Get-ChildItem "resources" -ErrorAction SilentlyContinue
+            exit 1
           }
-          Write-Host "LibreOffice bundled at resources\libreoffice"
+          Write-Host "Done. Files:"
           Get-ChildItem "resources\libreoffice" | Select-Object -First 5
         working-directory: desktop
 
