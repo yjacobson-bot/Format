@@ -192,7 +192,7 @@ export default function App() {
             })
           } catch {}
         }
-        try {
+        if (settings.showNotifications) try {
           if (Notification.permission === 'granted') {
             new Notification('פורמט נקי', { body: 'כל ההמרות הושלמו בהצלחה ✓', silent: true })
           } else if (Notification.permission !== 'denied') {
@@ -233,6 +233,35 @@ export default function App() {
   const runTask = useCallback(async (task) => {
     try {
       setTaskRunning(task.id, '')  // Mark running immediately to prevent double-start
+
+      // Merge/join tasks use a different IPC path
+      if (task.outputFormat?.id === 'merge') {
+        const joinFiles = task.settings?.joinFiles || []
+        const outputPath = await window.electronAPI?.buildOutputPath(
+          joinFiles[0] || task.inputPath,
+          task.settings?.outputDir || settings.outputDir || null,
+          task.outputFormat?.ext || 'mp4'
+        ) || task.inputPath.replace(/\.[^.]+$/, `.${task.outputFormat?.ext || 'mp4'}`)
+
+        const dir = outputPath.substring(0, Math.max(outputPath.lastIndexOf('/'), outputPath.lastIndexOf('\\')))
+        if (dir) await window.electronAPI?.ensureDir(dir)
+
+        setTaskRunning(task.id, outputPath)
+        const res = await window.electronAPI?.mergeVideos({
+          inputPaths: joinFiles,
+          outputPath,
+          settings: task.settings || {},
+        })
+        if (res?.success) {
+          const { setTaskComplete: stc } = useStore.getState()
+          stc(task.id)
+        } else {
+          const { setTaskError: ste } = useStore.getState()
+          ste(task.id, res?.error || 'שגיאה במיזוג')
+        }
+        return
+      }
+
       const outputPath = await window.electronAPI?.buildOutputPath(
         task.inputPath,
         task.settings?.outputDir || settings.outputDir || null,

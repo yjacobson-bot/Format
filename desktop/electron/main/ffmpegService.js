@@ -355,24 +355,38 @@ export async function mixAudio(inputPaths, outputPath, weights, settings, onProg
 export async function mergeVideos(inputPaths, outputPath, settings, onProgress) {
   return new Promise((resolve, reject) => {
     const listFile = outputPath + '.txt'
-    const listContent = inputPaths.map(p => `file '${p.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`).join('\n')
-    fs.writeFileSync(listFile, listContent)
+    const fileTrimMap = settings?.fileTrimMap || {}
+
+    // Build concat list with optional inpoint/outpoint per file
+    const listLines = inputPaths.flatMap(p => {
+      const escaped = p.replace(/\\/g, '\\\\').replace(/'/g, "\\'")
+      const trim = fileTrimMap[p]
+      const lines = [`file '${escaped}'`]
+      if (trim?.start != null) lines.push(`inpoint ${trim.start}`)
+      if (trim?.end != null) lines.push(`outpoint ${trim.end}`)
+      return lines
+    })
+    fs.writeFileSync(listFile, listLines.join('\n'))
 
     let cmd = ffmpeg()
       .input(listFile)
       .inputOptions(['-f', 'concat', '-safe', '0'])
 
-    // If not using copy codec, apply transcoding settings
+    const hasTranscoding = (settings?.videoCodec && settings.videoCodec !== 'copy') ||
+                           (settings?.audioCodec && settings.audioCodec !== 'copy')
+
     if (settings?.videoCodec && settings.videoCodec !== 'copy') {
       cmd = cmd.videoCodec(settings.videoCodec)
     }
     if (settings?.audioCodec && settings.audioCodec !== 'copy') {
       cmd = cmd.audioCodec(settings.audioCodec)
     }
-    if (settings?.audioBitrate) cmd = cmd.audioBitrate(settings.audioBitrate)
+    if (settings?.audioBitrate && settings.audioBitrate !== 'copy') {
+      cmd = cmd.audioBitrate(settings.audioBitrate)
+    }
 
-    // Default: stream copy for speed
-    if (!settings?.videoCodec || settings.videoCodec === 'copy') {
+    // Stream copy only when no transcoding is requested
+    if (!hasTranscoding) {
       cmd = cmd.outputOptions(['-c', 'copy'])
     }
 

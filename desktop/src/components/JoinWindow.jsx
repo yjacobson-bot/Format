@@ -276,7 +276,10 @@ export default function JoinWindow() {
 
   async function handleAddFiles() {
     const picked = await window.electronAPI?.openFiles({ multiple: true })
-    if (picked?.length) updateJoinFiles([...files, ...picked])
+    if (picked?.length) {
+      const newFiles = picked.map(p => ({ name: p.split(/[\\/]/).pop(), path: p, size: 0 }))
+      updateJoinFiles([...files, ...newFiles])
+    }
   }
 
   async function handleDrop(e) {
