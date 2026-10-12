@@ -56,6 +56,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return () => ipcRenderer.removeListener(`menu:${action}`, handler)
   },
 
+  convertDocument: (params) => ipcRenderer.invoke('docs:convertDocument', params),
+
   confirmClose: () => ipcRenderer.send('app:confirm-close'),
   cancelClose: () => ipcRenderer.send('app:cancel-close'),
   onCheckClose: (callback) => {

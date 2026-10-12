@@ -26,6 +26,25 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Download and bundle LibreOffice Portable
+        shell: powershell
+        run: |
+          $url = "https://download.documentfoundation.org/libreoffice/portable/24.8.7/LibreOfficePortablePrevious_24.8.7_MultilingualAll.paf.exe"
+          $installer = "$env:TEMP\lo_installer.exe"
+          Write-Host "Downloading LibreOffice Portable..."
+          Invoke-WebRequest -Uri $url -OutFile $installer -UseBasicParsing
+          Write-Host "Extracting..."
+          New-Item -ItemType Directory -Force -Path "resources" | Out-Null
+          & $installer /DESTINATION="$PWD\resources" /SILENT | Out-Null
+          Start-Sleep -Seconds 30
+          # PortableApps extracts to resources\LibreOfficePortable — rename to libreoffice
+          if (Test-Path "resources\LibreOfficePortable") {
+            Rename-Item "resources\LibreOfficePortable" "libreoffice"
+          }
+          Write-Host "LibreOffice bundled at resources\libreoffice"
+          Get-ChildItem "resources\libreoffice" | Select-Object -First 5
+        working-directory: desktop
+
       - name: Build Windows EXE
         run: npm run build:win
 
@@ -39,23 +58,28 @@ jobs:
       - name: Delete existing release and tag if present
         shell: bash
         run: |
-          gh release delete v2.5.0 --yes --cleanup-tag 2>/dev/null || true
+          gh release delete v2.6.0 --yes --cleanup-tag 2>/dev/null || true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v2.5.0
-          name: פורמט נקי v2.5.0
+          tag_name: v2.6.0
+          name: פורמט נקי v2.6.0
           draft: false
           prerelease: false
           files: desktop/dist/*.exe
           body: |
-            ## פורמט נקי v2.5.0 — Windows
+            ## פורמט נקי v2.6.0 — Windows
 
             **מתקין:** הורד `*-Setup.exe` והתקן רגיל.
             **נייד:** הורד `*-Portable.exe` — הפעל ישירות ללא התקנה, לא כותב לרג'יסטרי.
+
+            ### חדש בגירסה 2.6
+            - 📄 המרת מסמכים: PDF → Word / טקסט / ODT / RTF — כלול בתוכנה, ללא הורדה נוספת
+            - LibreOffice Portable מוטמע מראש בתוך המתקין (~440MB סה"כ)
+            - הסרת התוכנה מוחקת הכל אוטומטית
 
             ### תיקוני באגים בגירסה 2.5.0
             - תיקון קריטי: סימן מים כיסה את כל הוידאו — קנה מידה חושב יחסית לסימן המים עצמו, עכשיו יחסי לוידאו

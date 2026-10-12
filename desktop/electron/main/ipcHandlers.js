@@ -2,6 +2,7 @@ import { ipcMain, dialog, shell, app } from 'electron'
 import path from 'path'
 import fs from 'fs'
 import { exec } from 'child_process'
+import { convertDocument } from './libreofficeService.js'
 import {
   probeFile,
   startConversion,
@@ -179,5 +180,14 @@ export function registerHandlers(mainWindow) {
 
   ipcMain.on('app:cancel-close', () => {
     // nothing — window stays open
+  })
+
+  ipcMain.handle('docs:convertDocument', async (_, { inputPath, outputPath }) => {
+    try {
+      await convertDocument(inputPath, outputPath)
+      return { success: true, outputPath }
+    } catch (err) {
+      return { success: false, error: err.message }
+    }
   })
 }
