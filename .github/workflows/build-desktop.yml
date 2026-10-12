@@ -37,8 +37,18 @@ jobs:
           New-Item -ItemType Directory -Force -Path "resources" | Out-Null
           Write-Host "Extracting (this may take a few minutes)..."
           $proc = Start-Process -FilePath $installer -ArgumentList "/DESTINATION=`"$PWD\resources`"", "/SILENT" -PassThru
-          # Wait up to 5 minutes for extraction
-          $proc | Wait-Process -Timeout 300
+          # Wait up to 15 minutes for extraction
+          $timeout = 900
+          $elapsed = 0
+          while (!$proc.HasExited -and $elapsed -lt $timeout) {
+            Start-Sleep -Seconds 15
+            $elapsed += 15
+            Write-Host "Extracting... ${elapsed}s elapsed"
+          }
+          if (!$proc.HasExited) {
+            $proc.Kill()
+            throw "LibreOffice extraction timed out after ${timeout}s"
+          }
           Write-Host "Extractor exited with code: $($proc.ExitCode)"
           # PortableApps extracts to resources\LibreOfficePortable — rename to libreoffice
           if (Test-Path "resources\LibreOfficePortable") {
