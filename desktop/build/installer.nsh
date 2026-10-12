@@ -15,4 +15,6 @@
   Delete "$SMPROGRAMS\פורמט נקי\פורמט נקי.lnk"
   Delete "$SMPROGRAMS\פורמט נקי\הסר התקנה.lnk"
   RMDir "$SMPROGRAMS\פורמט נקי"
+  ; Remove LibreOffice Portable and all app data
+  RMDir /r "$APPDATA\פורמט נקי\libreoffice"
 !macroend
