@@ -39,7 +39,7 @@ jobs:
       - name: Delete existing release and tag if present
         shell: bash
         run: |
-          gh release delete v2.5.0 --yes --cleanup-tag 2>/dev/null || true
+          gh release delete v2.6.0 --yes --cleanup-tag 2>/dev/null || true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
