@@ -90,10 +90,10 @@ export function buildFFmpegCommand(inputPath, outputPath, settings, formatArgs) 
       center: '(W-w)/2:(H-h)/2',
     }
     const pos = posMap[settings.watermarkPosition || 'topleft']
-    const wmFilter = `[1:v]scale=iw*${scale}:-1[wm]`
+    // scale2ref scales watermark relative to VIDEO width (not watermark's own width)
     const baseFilter = vfFilters.length > 0
-      ? `[0:v]${vfFilters.join(',')}[mainv];${wmFilter};[mainv][wm]overlay=${pos}[out]`
-      : `${wmFilter};[0:v][wm]overlay=${pos}[out]`
+      ? `[0:v]${vfFilters.join(',')}[mainv];[1:v][mainv]scale2ref=iw*${scale}:-1[wm][base];[base][wm]overlay=${pos}[out]`
+      : `[1:v][0:v]scale2ref=iw*${scale}:-1[wm][base];[base][wm]overlay=${pos}[out]`
     cmd = cmd.complexFilter([baseFilter], '[out]').outputOptions(['-c:a', 'copy'])
   } else if (vfFilters.length > 0) {
     cmd = cmd.videoFilters(vfFilters)
@@ -108,10 +108,11 @@ export function buildFFmpegCommand(inputPath, outputPath, settings, formatArgs) 
   if (settings.sampleRate) cmd = cmd.audioFrequency(parseInt(settings.sampleRate))
   if (settings.channels) cmd = cmd.audioChannels(parseInt(settings.channels))
 
-  if (settings.volume) cmd = cmd.audioFilters(`volume=${settings.volume}`)
-  if (settings.normalize) cmd = cmd.audioFilters('dynaudnorm')
-  if (settings.fadeIn) cmd = cmd.audioFilters(`afade=t=in:d=${settings.fadeIn}`)
-  if (settings.fadeOut) cmd = cmd.audioFilters(`afade=t=out:d=${settings.fadeOut}`)
+  if (settings.noAudio) cmd = cmd.outputOptions(['-an'])
+  if (!settings.noAudio && settings.volume) cmd = cmd.audioFilters(`volume=${settings.volume}`)
+  if (!settings.noAudio && settings.normalize) cmd = cmd.audioFilters('dynaudnorm')
+  if (!settings.noAudio && settings.fadeIn) cmd = cmd.audioFilters(`afade=t=in:d=${settings.fadeIn}`)
+  if (!settings.noAudio && settings.fadeOut) cmd = cmd.audioFilters(`afade=t=out:d=${settings.fadeOut}`)
 
   if (settings.quality && !settings.videoCodec) {
     cmd = cmd.outputOptions(['-q:v', settings.quality])
@@ -136,18 +137,22 @@ export function buildFFmpegCommand(inputPath, outputPath, settings, formatArgs) 
     threadsPerJob = Math.max(1, Math.floor(totalCores / 2))
   } else {
     // 'optimal': proportional — each job gets cores / activeJobs
-    const activeCount = Math.max(1, activeJobs.size)
+    const activeCount = Math.max(1, activeJobs.size + 1) // +1 for this job being added
     threadsPerJob = Math.max(1, Math.floor(totalCores / activeCount))
   }
   cmd = cmd.outputOptions(['-threads', String(threadsPerJob)])
 
   if (formatArgs && formatArgs.length > 0) {
-    const notAlreadySet = formatArgs.filter((arg, i) => {
-      const isFlag = arg.startsWith('-')
-      if (!isFlag) return true
+    const skipIndices = new Set()
+    formatArgs.forEach((arg, i) => {
+      if (!arg.startsWith('-')) return
       const key = arg.split(':')[0].slice(1)
-      // Skip -vf from formatArgs if we already built vfFilters (would duplicate)
-      if (key === 'vf' && vfFilters.length > 0) return false
+      // Skip -vf and its following value if we already built vfFilters
+      if (key === 'vf' && vfFilters.length > 0) {
+        skipIndices.add(i)
+        if (i + 1 < formatArgs.length && !formatArgs[i + 1].startsWith('-')) skipIndices.add(i + 1)
+        return
+      }
       const alreadySet = [
         settings.videoCodec && 'c',
         settings.audioCodec && 'c',
@@ -157,8 +162,9 @@ export function buildFFmpegCommand(inputPath, outputPath, settings, formatArgs) 
         settings.sampleRate && 'ar',
         settings.channels && 'ac',
       ].filter(Boolean)
-      return !alreadySet.some(s => key.includes(s))
+      if (alreadySet.some(s => key.includes(s))) skipIndices.add(i)
     })
+    const notAlreadySet = formatArgs.filter((_, i) => !skipIndices.has(i))
     if (notAlreadySet.length > 0) {
       cmd = cmd.outputOptions(notAlreadySet)
     }
@@ -410,11 +416,11 @@ export async function addWatermark(videoPath, watermarkPath, outputPath, positio
   }
   const pos = overlayPos[position] || overlayPos.topleft
   // Scale watermark to wmScale fraction of video width, keep aspect ratio
-  const filter = `[1:v]scale=iw*${wmScale}:-1[wm];[0:v][wm]${pos}`
+  const filter = `[1:v][0:v]scale2ref=iw*${wmScale}:-1[wm][base];[base][wm]${pos}[out]`
   return new Promise((resolve, reject) => {
     ffmpeg(videoPath)
       .input(watermarkPath)
-      .complexFilter([filter])
+      .complexFilter([filter], '[out]')
       .outputOptions(['-c:a', 'copy'])
       .output(outputPath)
       .on('end', resolve)
@@ -437,7 +443,7 @@ export async function trimMultiple(inputPath, outputPath, segments, exportMode =
       ffmpeg(inputPath)
         .seekInput(parseFloat(seg.start) || 0)
         .duration(parseFloat(seg.end) - (parseFloat(seg.start) || 0))
-        .outputOptions(['-c', 'copy'])
+        .outputOptions(['-c', 'copy', '-map', '0:v?', '-map', '0:a?'])
         .output(out)
         .on('end', resolve)
         .on('error', reject)

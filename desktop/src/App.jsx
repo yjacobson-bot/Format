@@ -232,6 +232,7 @@ export default function App() {
 
   const runTask = useCallback(async (task) => {
     try {
+      setTaskRunning(task.id, '')  // Mark running immediately to prevent double-start
       const outputPath = await window.electronAPI?.buildOutputPath(
         task.inputPath,
         task.settings?.outputDir || settings.outputDir || null,
@@ -241,7 +242,7 @@ export default function App() {
       const dir = outputPath.substring(0, Math.max(outputPath.lastIndexOf('/'), outputPath.lastIndexOf('\\')))
       if (dir) await window.electronAPI?.ensureDir(dir)
 
-      setTaskRunning(task.id, outputPath)
+      setTaskRunning(task.id, outputPath)  // Update with real path
       const globalSettings = useStore.getState().settings
       await window.electronAPI?.startConversion({
         taskId: task.id,

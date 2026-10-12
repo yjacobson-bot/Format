@@ -74,7 +74,7 @@ export default function Queue({ onStart }) {
           }}>נקה הושלמו</button>
         )}
         {tasks.length > 0 && (
-          <button onClick={clearAll} style={{
+          <button onClick={() => { window.electronAPI?.cancelAll(); clearAll() }} style={{
             fontSize: 10, padding: '2px 10px', cursor: 'pointer',
             background: '#f0f0f5', border: '1px solid #aaa', borderRadius: 2, color: '#444',
           }}>נקה הכל</button>
