@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 
 const btnStyle = (color) => ({
   background: color, color: '#fff', border: 'none', borderRadius: 2,
@@ -107,33 +107,133 @@ function SplitPanel({ onClose }) {
   )
 }
 
-function MultiTrimPanel({ onClose }) {
-  const [inputFile, setInputFile] = useState('')
-  const [duration, setDuration] = useState(0)
+const SEGMENT_COLORS = ['#2563eb','#16a34a','#dc2626','#d97706','#7c3aed','#0891b2']
+
+function fmtTime(sec) {
+  const s = Math.max(0, parseInt(sec) || 0)
+  return `${String(Math.floor(s/3600)).padStart(2,'0')}:${String(Math.floor((s%3600)/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`
+}
+
+function SegmentSlider({ seg, index, dur, onUpdate, onRemove, canRemove, playerRef }) {
+  const timelineRef = useRef(null)
+  const drag = useRef(null)
+  const start = parseFloat(seg.start) || 0
+  const end = parseFloat(seg.end) || 0
+  const color = SEGMENT_COLORS[index % SEGMENT_COLORS.length]
+
+  function startDrag(which, e) {
+    e.preventDefault()
+    drag.current = which
+    const onMove = (ev) => {
+      const rect = timelineRef.current?.getBoundingClientRect()
+      if (!rect) return
+      const ratio = Math.max(0, Math.min(1, (ev.clientX - rect.left) / rect.width))
+      const t = ratio * dur
+      if (which === 'start') {
+        const ns = Math.min(t, end - 0.5)
+        onUpdate(index, 'start', Math.max(0, ns).toFixed(1))
+        if (playerRef.current) playerRef.current.currentTime = Math.max(0, ns)
+      } else {
+        const ne = Math.max(t, start + 0.5)
+        onUpdate(index, 'end', Math.min(dur, ne).toFixed(1))
+        if (playerRef.current) playerRef.current.currentTime = Math.min(dur, ne)
+      }
+    }
+    const onUp = () => { drag.current = null; window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp) }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }
+
+  function handleClick(e) {
+    if (drag.current) return
+    const rect = timelineRef.current?.getBoundingClientRect()
+    if (!rect) return
+    const t = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)) * dur
+    if (playerRef.current) playerRef.current.currentTime = t
+  }
+
+  return (
+    <div style={{ marginBottom: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
+        <span style={{ fontSize: 10, color, fontWeight: 700, minWidth: 20 }}>#{index+1}</span>
+        <input type="number" min={0} max={dur} step={0.1} value={seg.start}
+          onChange={e => onUpdate(index, 'start', e.target.value)}
+          placeholder="התחלה" style={{ ...inputStyle, width: 70, flex: 'none' }} />
+        <span style={{ fontSize: 10, color: '#888' }}>—</span>
+        <input type="number" min={0} max={dur} step={0.1} value={seg.end}
+          onChange={e => onUpdate(index, 'end', e.target.value)}
+          placeholder="סוף" style={{ ...inputStyle, width: 70, flex: 'none' }} />
+        {start !== '' && end !== '' && end > start && (
+          <span style={{ fontSize: 9, color: '#6b7280', whiteSpace: 'nowrap' }}>
+            {fmtTime(start)} – {fmtTime(end)} ({fmtTime(end - start)})
+          </span>
+        )}
+        {canRemove && (
+          <button onClick={() => onRemove(index)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#dc2626', fontSize: 13, marginRight: 'auto' }}>✕</button>
+        )}
+      </div>
+      {dur > 0 && (
+        <div ref={timelineRef} onClick={handleClick}
+          style={{ position: 'relative', height: 18, background: '#e2e8f0', borderRadius: 2, cursor: 'pointer', userSelect: 'none' }}>
+          <div style={{
+            position: 'absolute', top: 0, height: '100%',
+            left: `${(start / dur) * 100}%`,
+            width: `${Math.max(0, (end - start) / dur) * 100}%`,
+            background: color + '55', borderLeft: `2px solid ${color}`, borderRight: `2px solid ${color}`,
+          }} />
+          {/* start handle */}
+          <div onMouseDown={e => startDrag('start', e)} style={{
+            position: 'absolute', top: -2, width: 10, height: 22,
+            left: `calc(${(start / dur) * 100}% - 5px)`,
+            background: color, borderRadius: 2, cursor: 'ew-resize', zIndex: 2,
+          }} />
+          {/* end handle */}
+          <div onMouseDown={e => startDrag('end', e)} style={{
+            position: 'absolute', top: -2, width: 10, height: 22,
+            left: `calc(${(end / dur) * 100}% - 5px)`,
+            background: color, borderRadius: 2, cursor: 'ew-resize', zIndex: 2,
+          }} />
+        </div>
+      )}
+    </div>
+  )
+}
+
+export function MultiTrimPanel({ onClose, filePath: extFile, duration: extDur }) {
+  const [inputFile, setInputFile] = useState(extFile || '')
+  const [duration, setDuration] = useState(extDur || 0)
   const [outputPath, setOutputPath] = useState('')
-  const [segments, setSegments] = useState([{ start: '', end: '' }])
-  const [exportMode, setExportMode] = useState('single') // 'single' | 'multiple'
+  const [segments, setSegments] = useState([{ start: '0', end: '' }])
+  const [exportMode, setExportMode] = useState('single')
   const [status, setStatus] = useState('')
+  const [isAudio, setIsAudio] = useState(false)
+  const playerRef = useRef(null)
 
   const pickFile = async () => {
     const paths = await window.electronAPI?.openFiles({
       filters: [{ name: 'מדיה', extensions: ['mp4','avi','mkv','mov','mp3','wav','aac','m4a','flac'] }]
     })
     if (!paths?.[0]) return
-    setInputFile(paths[0])
+    const f = paths[0]
+    setInputFile(f)
     setStatus('')
-    const probe = await window.electronAPI?.probeFile(paths[0])
-    if (probe?.success) setDuration(Math.floor(probe.data?.format?.duration || 0))
+    setIsAudio(/\.(mp3|wav|aac|m4a|flac|ogg)$/i.test(f))
+    const probe = await window.electronAPI?.probeFile(f)
+    if (probe?.success) {
+      const d = parseFloat(probe.data?.format?.duration || 0)
+      setDuration(d)
+      setSegments([{ start: '0', end: d.toFixed(1) }])
+    }
   }
 
-  const addSegment = () => setSegments(s => [...s, { start: '', end: '' }])
+  const addSegment = () => {
+    const last = segments[segments.length - 1]
+    const lastEnd = parseFloat(last?.end) || 0
+    setSegments(s => [...s, { start: lastEnd.toFixed(1), end: Math.min(duration, lastEnd + 30).toFixed(1) }])
+  }
   const removeSegment = (i) => setSegments(s => s.filter((_, j) => j !== i))
   const updateSegment = (i, field, val) => setSegments(s => s.map((seg, j) => j === i ? { ...seg, [field]: val } : seg))
-
-  const fmtTime = (sec) => {
-    const s = parseInt(sec) || 0
-    return `${String(Math.floor(s/3600)).padStart(2,'0')}:${String(Math.floor((s%3600)/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`
-  }
 
   const handleRun = async () => {
     if (!inputFile) { alert('יש לבחור קובץ.'); return }
@@ -141,36 +241,39 @@ function MultiTrimPanel({ onClose }) {
     const parsed = segments.map(s => ({ start: parseFloat(s.start) || 0, end: parseFloat(s.end) || 0 }))
     if (parsed.some(s => s.end <= s.start)) { alert('כל קטע חייב שהסוף יהיה אחרי ההתחלה.'); return }
     setStatus('מעבד...')
-    const res = await window.electronAPI?.trimMultiple({
-      inputPath: inputFile,
-      outputPath,
-      segments: parsed,
-      exportMode,
-    })
+    const res = await window.electronAPI?.trimMultiple({ inputPath: inputFile, outputPath, segments: parsed, exportMode })
     setStatus(res?.success ? '✅ הושלם!' : `❌ ${res?.error}`)
   }
 
   const ext = inputFile ? inputFile.split('.').pop() : 'mp4'
+  const fileUrl = inputFile ? `file:///${inputFile.replace(/\\/g, '/')}` : null
 
   return (
     <div style={{ background: '#f8f8f8', border: '1px solid #ccc', borderRadius: 2, padding: 10 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
         <span style={{ fontSize: 12, fontWeight: 700, color: '#333' }}>✂️ חיתוך מרובה</span>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#888' }}>✕</button>
+        {onClose && <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#888' }}>✕</button>}
       </div>
       <div style={{ fontSize: 10, color: '#888', marginBottom: 8 }}>
-        בחר קטעים <strong>לשמור</strong> מתוך הקובץ — הם יחוברו לקובץ פלט אחד לפי הסדר.
+        בחר קטעים <strong>לשמור</strong> — גרור את הידיות על הציר או הזן שניות ידנית.
       </div>
 
       {/* File picker */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
-        <input type="text" value={inputFile ? inputFile.split(/[\\/]/).pop() : ''} readOnly
-          placeholder="בחר קובץ מדיה..." style={{ ...inputStyle, background: '#f5f5f5' }} />
-        <button onClick={pickFile} style={browseStyle}>עיון</button>
-      </div>
-      {duration > 0 && (
-        <div style={{ fontSize: 10, color: '#555', marginBottom: 8 }}>
-          משך: <strong>{fmtTime(duration)}</strong> ({duration} שניות)
+      {!extFile && (
+        <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
+          <input type="text" value={inputFile ? inputFile.split(/[\\/]/).pop() : ''} readOnly
+            placeholder="בחר קובץ מדיה..." style={{ ...inputStyle, background: '#f5f5f5' }} />
+          <button onClick={pickFile} style={browseStyle}>עיון</button>
+        </div>
+      )}
+
+      {/* Player */}
+      {fileUrl && (
+        <div style={{ marginBottom: 8 }}>
+          {isAudio
+            ? <audio ref={playerRef} src={fileUrl} controls style={{ width: '100%' }} onLoadedMetadata={e => { if (!extDur) setDuration(e.target.duration) }} />
+            : <video ref={playerRef} src={fileUrl} controls style={{ width: '100%', maxHeight: 140, background: '#000', borderRadius: 2 }} onLoadedMetadata={e => { if (!extDur) setDuration(e.target.duration) }} />
+          }
         </div>
       )}
 
@@ -178,25 +281,7 @@ function MultiTrimPanel({ onClose }) {
       <div style={{ marginBottom: 8 }}>
         <div style={{ fontSize: 10, fontWeight: 700, color: '#555', marginBottom: 4 }}>קטעים לשמור:</div>
         {segments.map((seg, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 5 }}>
-            <span style={{ fontSize: 10, color: '#888', minWidth: 16 }}>#{i+1}</span>
-            <input type="number" min={0} max={duration || 99999} step={0.1}
-              value={seg.start} onChange={e => updateSegment(i, 'start', e.target.value)}
-              placeholder="התחלה (שנ׳)" style={{ ...inputStyle, width: 90, flex: 'none' }} />
-            <span style={{ fontSize: 10, color: '#888' }}>—</span>
-            <input type="number" min={0} max={duration || 99999} step={0.1}
-              value={seg.end} onChange={e => updateSegment(i, 'end', e.target.value)}
-              placeholder="סוף (שנ׳)" style={{ ...inputStyle, width: 90, flex: 'none' }} />
-            {duration > 0 && seg.start !== '' && seg.end !== '' && (
-              <span style={{ fontSize: 9, color: '#6b7280', whiteSpace: 'nowrap' }}>
-                {fmtTime(seg.start)} – {fmtTime(seg.end)}
-              </span>
-            )}
-            {segments.length > 1 && (
-              <button onClick={() => removeSegment(i)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#dc2626', fontSize: 13, lineHeight: 1 }}>✕</button>
-            )}
-          </div>
+          <SegmentSlider key={i} seg={seg} index={i} dur={duration} onUpdate={updateSegment} onRemove={removeSegment} canRemove={segments.length > 1} playerRef={playerRef} />
         ))}
         <button onClick={addSegment}
           style={{ fontSize: 10, color: '#1d4ed8', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0' }}>
@@ -205,21 +290,20 @@ function MultiTrimPanel({ onClose }) {
       </div>
 
       {/* Output */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
-        <input type="text" value={outputPath} onChange={e => setOutputPath(e.target.value)}
-          placeholder="נתיב קובץ פלט..." style={inputStyle} />
-        <button onClick={async () => {
-          const p = await window.electronAPI?.saveFile({ filters: [{ name: 'Output', extensions: [ext] }] })
-          if (p) setOutputPath(p)
-        }} style={browseStyle}>עיון</button>
-      </div>
+      {!extFile && (
+        <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
+          <input type="text" value={outputPath} onChange={e => setOutputPath(e.target.value)}
+            placeholder="נתיב קובץ פלט..." style={inputStyle} />
+          <button onClick={async () => {
+            const p = await window.electronAPI?.saveFile({ filters: [{ name: 'Output', extensions: [ext] }] })
+            if (p) setOutputPath(p)
+          }} style={browseStyle}>עיון</button>
+        </div>
+      )}
 
-      {/* Export mode toggle */}
+      {/* Export mode */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
-        {[
-          { value: 'single',   label: 'קובץ אחד מחובר' },
-          { value: 'multiple', label: 'קבצים נפרדים' },
-        ].map(opt => (
+        {[{ value: 'single', label: 'קובץ אחד מחובר' }, { value: 'multiple', label: 'קבצים נפרדים' }].map(opt => (
           <button key={opt.value} onClick={() => setExportMode(opt.value)} style={{
             flex: 1, padding: '5px 6px', border: '1px solid',
             borderColor: exportMode === opt.value ? '#2563eb' : '#d1d5db',
@@ -231,7 +315,7 @@ function MultiTrimPanel({ onClose }) {
       </div>
       {exportMode === 'multiple' && (
         <div style={{ fontSize: 9, color: '#6b7280', marginBottom: 6 }}>
-          כל קטע יישמר עם מספר לפני סיומת הקובץ (למשל output_1.mp4, output_2.mp4…)
+          כל קטע יישמר עם מספר לפני סיומת הקובץ (למשל output_1.mp3, output_2.mp3…)
         </div>
       )}
 

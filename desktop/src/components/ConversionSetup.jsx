@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { useStore } from '../store/useStore'
+import { MultiTrimPanel } from '../pages/ToolsPage'
 import {
   VIDEO_CODECS, AUDIO_CODECS, RESOLUTIONS, VIDEO_BITRATES,
   AUDIO_BITRATES, FRAMERATES, SAMPLE_RATES, AUDIO_CHANNELS,
@@ -213,16 +214,20 @@ function TrimEditor({ filePath, duration, trim, onChange, category }) {
 function AudioSettings({ settings, onChange, filePath, duration, category }) {
   const s = settings || {}
   const [activeTab, setActiveTab] = useState('audio')
-  const tabs = [{ id: 'audio', label: 'אודיו' }, { id: 'trim', label: '✂ חיתוך' }]
+  const tabs = [
+    { id: 'audio', label: 'אודיו' },
+    { id: 'trim', label: '✂ חיתוך' },
+    { id: 'multitrim', label: '✂✂ חיתוך מרובה' },
+  ]
   return (
     <div>
-      <div style={{ display: 'flex', gap: 1, marginBottom: 8 }}>
-        {tabs.map(t => (
+      <div style={{ display: 'flex', gap: 1, marginBottom: 8, flexWrap: 'wrap' }}>
+        {tabs.map((t, i) => (
           <button key={t.id} onClick={() => setActiveTab(t.id)} style={{
             padding: '3px 12px', fontSize: 11, cursor: 'pointer', border: '1px solid #bbb',
             background: activeTab === t.id ? '#0066cc' : '#f0f0f0',
             color: activeTab === t.id ? '#fff' : '#333',
-            borderRadius: t.id === 'audio' ? '3px 0 0 3px' : '0 3px 3px 0',
+            borderRadius: i === 0 ? '3px 0 0 3px' : i === tabs.length - 1 ? '0 3px 3px 0' : '0',
           }}>{t.label}</button>
         ))}
       </div>
@@ -262,6 +267,10 @@ function AudioSettings({ settings, onChange, filePath, duration, category }) {
           onChange={trim => onChange({ ...s, trim })}
           category={category}
         />
+      )}
+
+      {activeTab === 'multitrim' && (
+        <MultiTrimPanel filePath={filePath} duration={duration} />
       )}
     </div>
   )
