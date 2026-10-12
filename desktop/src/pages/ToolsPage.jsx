@@ -345,23 +345,32 @@ export function MultiTrimPanel({ onClose, filePath: extFile, duration: extDur })
   )
 }
 
+const WM_POS_STYLE = {
+  topleft:     { top: 8, left: 8 },
+  topright:    { top: 8, right: 8 },
+  bottomleft:  { bottom: 8, left: 8 },
+  bottomright: { bottom: 8, right: 8 },
+  center:      { top: '50%', left: '50%', transform: 'translate(-50%,-50%)' },
+}
+
 function WatermarkPanel({ onClose }) {
   const addTasks = useStore(s => s.addTasks)
   const [videoPath, setVideoPath] = useState('')
   const [wmPath, setWmPath] = useState('')
   const [position, setPosition] = useState('topleft')
-  const [wmScale, setWmScale] = useState(0.2)
+  const [wmScale, setWmScale] = useState(0.1)
   const [status, setStatus] = useState('')
 
   const videoUrl = videoPath ? `file:///${videoPath.replace(/\\/g, '/')}` : null
+  const wmUrl = wmPath ? `file:///${wmPath.replace(/\\/g, '/')}` : null
 
   const handleApply = () => {
     if (!videoPath || !wmPath) { alert('יש לבחור קובץ וידאו ותמונת סימן מים.'); return }
-    const outputFormat = { id: 'mp4', label: 'MP4 עם סימן מים', ext: 'mp4', ffmpegArgs: [] }
-    const settings = { watermarkPath: wmPath, watermarkPosition: position, watermarkScale: wmScale }
     addTasks(
       [{ path: videoPath, name: videoPath.split(/[\\/]/).pop(), size: 0 }],
-      outputFormat, settings, 'video'
+      { id: 'mp4', label: 'MP4 עם סימן מים', ext: 'mp4', ffmpegArgs: [] },
+      { watermarkPath: wmPath, watermarkPosition: position, watermarkScale: wmScale },
+      'video'
     )
     setStatus('✅ נוסף לתור ההמרות!')
   }
@@ -379,16 +388,9 @@ function WatermarkPanel({ onClose }) {
           placeholder="קובץ וידאו..." style={{ ...inputStyle, background: '#f5f5f5' }} />
         <button onClick={async () => {
           const paths = await window.electronAPI?.openFiles({ filters: [{ name: 'וידאו', extensions: ['mp4','avi','mkv','mov'] }] })
-          if (paths?.[0]) setVideoPath(paths[0])
+          if (paths?.[0]) { setVideoPath(paths[0]); setStatus('') }
         }} style={browseStyle}>עיון</button>
       </div>
-
-      {/* Video preview */}
-      {videoUrl && (
-        <div style={{ marginBottom: 8 }}>
-          <video src={videoUrl} controls style={{ width: '100%', maxHeight: 140, background: '#000', borderRadius: 2 }} />
-        </div>
-      )}
 
       {/* Watermark image */}
       <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
@@ -396,9 +398,24 @@ function WatermarkPanel({ onClose }) {
           placeholder="תמונת סימן מים (PNG)..." style={{ ...inputStyle, background: '#f5f5f5' }} />
         <button onClick={async () => {
           const paths = await window.electronAPI?.openFiles({ filters: [{ name: 'תמונה', extensions: ['png','jpg'] }] })
-          if (paths?.[0]) setWmPath(paths[0])
+          if (paths?.[0]) { setWmPath(paths[0]); setStatus('') }
         }} style={browseStyle}>עיון</button>
       </div>
+
+      {/* Live preview with watermark overlay */}
+      {videoUrl && (
+        <div style={{ position: 'relative', marginBottom: 8, lineHeight: 0 }}>
+          <video src={videoUrl} controls
+            style={{ width: '100%', maxHeight: 160, background: '#000', borderRadius: 2, display: 'block' }} />
+          {wmUrl && (
+            <img src={wmUrl} alt="" style={{
+              position: 'absolute', width: `${wmScale * 100}%`,
+              pointerEvents: 'none', opacity: 0.9,
+              ...WM_POS_STYLE[position],
+            }} />
+          )}
+        </div>
+      )}
 
       {/* Position */}
       <div style={{ marginBottom: 8 }}>
@@ -419,9 +436,12 @@ function WatermarkPanel({ onClose }) {
         <div style={{ fontSize: 10, fontWeight: 600, color: '#666', marginBottom: 3 }}>
           גודל סימן מים: {Math.round(wmScale * 100)}%
         </div>
-        <input type="range" min={5} max={50} step={1} value={Math.round(wmScale * 100)}
+        <input type="range" min={1} max={30} step={1} value={Math.round(wmScale * 100)}
           onChange={e => setWmScale(parseInt(e.target.value) / 100)}
           style={{ width: '100%' }} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: '#aaa' }}>
+          <span>1%</span><span>30%</span>
+        </div>
       </div>
 
       <button onClick={handleApply} style={btnStyle('#2563eb')}>הוסף לתור</button>
