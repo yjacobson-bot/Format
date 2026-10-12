@@ -40,8 +40,8 @@ function downloadFile(url, destPath, onProgress) {
       })
       response.on('end', () => {
         file.end()
-        resolve()
       })
+      file.on('finish', () => resolve())
       response.on('error', (err) => {
         file.close()
         reject(err)
@@ -69,12 +69,15 @@ export async function downloadLibreOffice(onProgress) {
 
   onProgress && onProgress(82)
 
+  // Wait for OS to release file handle (antivirus scan etc.)
+  await new Promise(r => setTimeout(r, 1500))
+
   // Silent extraction — PortableApps format supports /DESTINATION and /SILENT
   await new Promise((resolve, reject) => {
     execFile(
       LO_INSTALLER,
       [`/DESTINATION=${app.getPath('userData')}`, '/SILENT'],
-      { shell: false, timeout: 300_000 },
+      { shell: true, timeout: 300_000 },
       (err) => {
         if (err && err.code !== 0 && err.code !== 1) {
           reject(new Error(`שגיאה בחילוץ: ${err.message}`))
