@@ -361,6 +361,7 @@ function WatermarkPanel({ onClose }) {
   const [wmScale, setWmScale] = useState(0.1)
   const [status, setStatus] = useState('')
 
+  const [videoAspect, setVideoAspect] = useState(null)
   const videoUrl = videoPath ? `file:///${videoPath.replace(/\\/g, '/')}` : null
   const wmUrl = wmPath ? `file:///${wmPath.replace(/\\/g, '/')}` : null
 
@@ -404,9 +405,14 @@ function WatermarkPanel({ onClose }) {
 
       {/* Live preview with watermark overlay */}
       {videoUrl && (
-        <div style={{ position: 'relative', marginBottom: 8, lineHeight: 0 }}>
+        <div style={{ marginBottom: 8, lineHeight: 0, background: '#000', borderRadius: 2, overflow: 'hidden',
+          ...(videoAspect ? { position: 'relative', aspectRatio: String(videoAspect), maxHeight: 160 } : { position: 'relative' }) }}>
           <video src={videoUrl} controls
-            style={{ width: '100%', maxHeight: 160, background: '#000', borderRadius: 2, display: 'block' }} />
+            onLoadedMetadata={e => {
+              const v = e.target
+              if (v.videoWidth && v.videoHeight) setVideoAspect(v.videoWidth / v.videoHeight)
+            }}
+            style={{ width: '100%', height: '100%', display: 'block', objectFit: 'fill' }} />
           {wmUrl && (
             <img src={wmUrl} alt="" style={{
               position: 'absolute', width: `${wmScale * 100}%`,
