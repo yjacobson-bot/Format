@@ -4,7 +4,7 @@ import path from 'path'
 import { execFile } from 'child_process'
 
 const LO_VERSION = '24.8.7'
-const LO_URL = `https://download.documentfoundation.org/libreoffice/portable/${LO_VERSION}/LibreOfficePortable_${LO_VERSION}_MultilingualStandard.paf.exe`
+const LO_URL = `https://download.documentfoundation.org/libreoffice/portable/${LO_VERSION}/LibreOfficePortablePrevious_${LO_VERSION}_MultilingualAll.paf.exe`
 const LO_DIR  = path.join(app.getPath('userData'), 'libreoffice')
 const LO_EXE  = path.join(LO_DIR, 'LibreOfficePortable.exe')
 const LO_INSTALLER = path.join(app.getPath('userData'), 'lo_installer.exe')
