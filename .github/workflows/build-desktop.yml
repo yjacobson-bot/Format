@@ -37,8 +37,12 @@ jobs:
           New-Item -ItemType Directory -Force -Path "resources\libreoffice" | Out-Null
           Write-Host "Extracting with 7-Zip..."
           & "C:\Program Files\7-Zip\7z.exe" x $installer -o"resources\libreoffice" -y
-          Write-Host "Done. Files:"
-          Get-ChildItem "resources\libreoffice" | Select-Object -First 8
+          Write-Host "Done. Top-level files:"
+          Get-ChildItem "resources\libreoffice" | Select-Object -First 10
+          Write-Host "Searching for soffice.exe..."
+          Get-ChildItem "resources\libreoffice" -Recurse -Filter "soffice.exe" | Select-Object FullName
+          Write-Host "Searching for LibreOfficePortable.exe..."
+          Get-ChildItem "resources\libreoffice" -Recurse -Filter "LibreOfficePortable.exe" | Select-Object FullName
         working-directory: desktop
 
       - name: Build Windows EXE
