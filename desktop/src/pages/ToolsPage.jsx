@@ -346,23 +346,27 @@ function WatermarkPanel({ onClose }) {
         <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#888' }}>✕</button>
       </div>
       {[
-        { label: 'Input Video', value: videoPath, set: setVideoPath, ext: ['mp4','avi','mkv','mov'] },
-        { label: 'Watermark Image (PNG)', value: wmPath, set: setWmPath, ext: ['png','jpg'] },
+        { label: 'קובץ וידאו', value: videoPath, set: setVideoPath, ext: ['mp4','avi','mkv','mov'] },
+        { label: 'תמונת סימן מים (PNG)', value: wmPath, set: setWmPath, ext: ['png','jpg'] },
       ].map(f => (
         <div key={f.label} style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
-          <input type="text" value={f.value} readOnly placeholder={f.label + '...'} style={{ ...inputStyle, background: '#f5f5f5' }} />
+          <input type="text" value={f.value ? f.value.split(/[\\/]/).pop() : ''} readOnly placeholder={f.label + '...'} style={{ ...inputStyle, background: '#f5f5f5' }} />
           <button onClick={async () => {
             const paths = await window.electronAPI?.openFiles({ filters: [{ name: f.label, extensions: f.ext }] })
             if (paths?.[0]) f.set(paths[0])
-          }} style={browseStyle}>Browse</button>
+          }} style={browseStyle}>עיון</button>
         </div>
       ))}
       <div style={{ marginBottom: 8 }}>
         <div style={{ fontSize: 10, fontWeight: 600, color: '#666', marginBottom: 3 }}>מיקום</div>
         <select value={position} onChange={e => setPosition(e.target.value)} style={{ ...inputStyle, flex: 'none', width: '100%' }}>
-          {['topleft','topright','bottomleft','bottomright','center'].map(p => (
-            <option key={p} value={p}>{p}</option>
-          ))}
+          {[
+            { value: 'topleft',     label: 'שמאל עליון' },
+            { value: 'topright',    label: 'ימין עליון' },
+            { value: 'bottomleft',  label: 'שמאל תחתון' },
+            { value: 'bottomright', label: 'ימין תחתון' },
+            { value: 'center',      label: 'מרכז' },
+          ].map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
         </select>
       </div>
       <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
