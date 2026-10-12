@@ -153,10 +153,25 @@ function SegmentSlider({ seg, index, dur, onUpdate, onRemove, canRemove, playerR
     if (playerRef.current) playerRef.current.currentTime = t
   }
 
+  function playSegment() {
+    const player = playerRef.current
+    if (!player) return
+    player.currentTime = start
+    player.play()
+    const stop = () => {
+      if (player.currentTime >= end) { player.pause(); player.removeEventListener('timeupdate', stop) }
+    }
+    player.addEventListener('timeupdate', stop)
+  }
+
   return (
     <div style={{ marginBottom: 8 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
         <span style={{ fontSize: 10, color, fontWeight: 700, minWidth: 20 }}>#{index+1}</span>
+        <button onClick={playSegment} title="השמע קטע זה" style={{
+          background: color, color: '#fff', border: 'none', borderRadius: 2,
+          width: 18, height: 18, fontSize: 9, cursor: 'pointer', flexShrink: 0, lineHeight: 1,
+        }}>▶</button>
         <input type="number" min={0} max={dur} step={0.1} value={seg.start}
           onChange={e => onUpdate(index, 'start', e.target.value)}
           placeholder="התחלה" style={{ ...inputStyle, width: 70, flex: 'none' }} />
