@@ -67,13 +67,17 @@ export default function DocumentsPage() {
   if (!loInstalled) return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: 32, direction: 'rtl' }}>
       <span style={{ fontSize: 48 }}>📦</span>
-      <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: '#1a3060', marginBottom: 6 }}>נדרשת הורדה חד-פעמית</div>
-        <div style={{ fontSize: 12, color: '#555', marginBottom: 4 }}>
-          המרת מסמכים מתבצעת על ידי LibreOffice Portable (~330MB).
+      <div style={{
+        background: '#fff8e1', border: '2px solid #f59e0b', borderRadius: 8,
+        padding: '16px 24px', maxWidth: 380, textAlign: 'center',
+      }}>
+        <div style={{ fontSize: 16, fontWeight: 800, color: '#92400e', marginBottom: 8 }}>
+          ⚠ נדרש חיבור לאינטרנט — פעם אחת בלבד
         </div>
-        <div style={{ fontSize: 12, color: '#555' }}>
-          ההורדה מתבצעת פעם אחת בלבד — לאחר מכן עובד 100% אופליין.
+        <div style={{ fontSize: 12, color: '#78350f', lineHeight: 1.7 }}>
+          פיצ'ר המסמכים משתמש ב-<strong>LibreOffice Portable</strong> (~330MB).<br />
+          <strong>ההורדה מתבצעת פעם אחת בלבד.</strong><br />
+          לאחר מכן התוכנה עובדת <strong>100% ללא אינטרנט</strong>, לנצח.
         </div>
       </div>
 
