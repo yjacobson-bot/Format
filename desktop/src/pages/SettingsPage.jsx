@@ -255,7 +255,7 @@ export default function SettingsPage() {
 
         {/* ── About ── */}
         <Card style={{ background: '#f0f4ff', borderColor: '#c7d2fe', borderRight: '3px solid #3b82f6', marginBottom: 14 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#1d4ed8', marginBottom: 6 }}>פורמט נקי v2.0</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#1d4ed8', marginBottom: 6 }}>פורמט נקי v2.2</div>
           <div style={{ fontSize: 11, color: '#3730a3', lineHeight: 1.8 }}>
             נבנה ופותח על ידי <strong>yj05485</strong> ממתמחים טופ.<br />
             מבוסס FFmpeg — ממיר מדיה חינמי, 100% אופליין, ללא פרסומות.<br />
