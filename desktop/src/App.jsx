@@ -28,6 +28,7 @@ import Queue from './components/Queue'
 import ConversionSetup from './components/ConversionSetup'
 import JoinWindow from './components/JoinWindow'
 import SettingsPage from './pages/SettingsPage'
+import WavAuthModal from './components/WavAuthModal'
 import {
   VIDEO_INPUT_EXTENSIONS, AUDIO_INPUT_EXTENSIONS, IMAGE_INPUT_EXTENSIONS,
   VIDEO_FORMATS, AUDIO_FORMATS, IMAGE_FORMATS,
@@ -157,6 +158,7 @@ export default function App() {
   const [formatPicker, setFormatPicker] = useState(null)
   const [dragging, setDragging] = useState(false)
   const [availableHW, setAvailableHW] = useState([])
+  const [wavAuth, setWavAuth] = useState(null) // { resolve, reject }
 
   useEffect(() => {
     window.electronAPI?.detectHardwareEncoders?.().then(hw => setAvailableHW(hw || [])).catch(() => {})
@@ -229,8 +231,20 @@ export default function App() {
     })
   }, [])
 
+  const requireWavAuth = useCallback(() => new Promise((resolve, reject) => {
+    setWavAuth({ resolve, reject })
+  }), [])
+
+  const isWav = (path) => path?.toLowerCase().endsWith('.wav')
+
   const runTask = useCallback(async (task) => {
     try {
+      const outputExt = task.outputFormat?.ext || 'mp4'
+      const needsAuth = isWav(task.inputPath) || outputExt === 'wav'
+      if (needsAuth) {
+        try { await requireWavAuth() } catch { return }
+      }
+
       const outputPath = await window.electronAPI?.buildOutputPath(
         task.inputPath,
         task.settings?.outputDir || settings.outputDir || null,
@@ -381,6 +395,13 @@ export default function App() {
 
       <ConversionSetup availableHW={availableHW} />
       <JoinWindow />
+
+      {wavAuth && (
+        <WavAuthModal
+          onApprove={() => { const r = wavAuth.resolve; setWavAuth(null); r() }}
+          onCancel={() => { const r = wavAuth.reject; setWavAuth(null); r(new Error('cancelled')) }}
+        />
+      )}
 
       {closeConfirmVisible && (
         <div style={{
