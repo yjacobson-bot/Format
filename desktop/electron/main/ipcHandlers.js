@@ -131,9 +131,9 @@ export function registerHandlers(mainWindow) {
     }
   })
 
-  ipcMain.handle('tools:addWatermark', async (_, { videoPath, watermarkPath, outputPath, position }) => {
+  ipcMain.handle('tools:addWatermark', async (_, { videoPath, watermarkPath, outputPath, position, wmScale }) => {
     try {
-      await addWatermark(videoPath, watermarkPath, outputPath, position)
+      await addWatermark(videoPath, watermarkPath, outputPath, position, wmScale)
       return { success: true }
     } catch (err) {
       return { success: false, error: err.message }
