@@ -20,6 +20,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   mergeVideos: (params) => ipcRenderer.invoke('tools:mergeVideos', params),
   splitVideo: (params) => ipcRenderer.invoke('tools:splitVideo', params),
   addWatermark: (params) => ipcRenderer.invoke('tools:addWatermark', params),
+  trimMultiple: (params) => ipcRenderer.invoke('tools:trimMultiple', params),
 
   detectHardwareEncoders: () => ipcRenderer.invoke('ffmpeg:detectHW'),
   getVersion: () => ipcRenderer.invoke('app:getVersion'),

@@ -399,6 +399,72 @@ export async function addWatermark(videoPath, watermarkPath, outputPath, positio
   })
 }
 
+// Trim multiple segments from a single file
+// exportMode 'single': concat all segments into one output file
+// exportMode 'multiple': save each segment as a separate file (output_1.ext, output_2.ext…)
+export async function trimMultiple(inputPath, outputPath, segments, exportMode = 'single') {
+  if (!segments || segments.length === 0) throw new Error('No segments provided')
+
+  if (exportMode === 'multiple') {
+    const ext = path.extname(outputPath)
+    const base = outputPath.slice(0, -ext.length)
+    const jobs = segments.map((seg, i) => new Promise((resolve, reject) => {
+      const out = `${base}_${i + 1}${ext}`
+      ffmpeg(inputPath)
+        .seekInput(parseFloat(seg.start) || 0)
+        .duration(parseFloat(seg.end) - (parseFloat(seg.start) || 0))
+        .outputOptions(['-c', 'copy'])
+        .output(out)
+        .on('end', resolve)
+        .on('error', reject)
+        .run()
+    }))
+    return Promise.all(jobs)
+  }
+
+  // Single concat mode using filter_complex
+  return new Promise((resolve, reject) => {
+    const n = segments.length
+    const vParts = [], aParts = [], filterParts = []
+
+    segments.forEach((seg, i) => {
+      const start = parseFloat(seg.start) || 0
+      const end = parseFloat(seg.end)
+      filterParts.push(
+        `[0:v]trim=start=${start}:end=${end},setpts=PTS-STARTPTS[v${i}]`,
+        `[0:a]atrim=start=${start}:end=${end},asetpts=PTS-STARTPTS[a${i}]`,
+      )
+      vParts.push(`[v${i}]`)
+      aParts.push(`[a${i}]`)
+    })
+    filterParts.push(`${vParts.join('')}${aParts.join('')}concat=n=${n}:v=1:a=1[vout][aout]`)
+
+    ffmpeg(inputPath)
+      .complexFilter(filterParts)
+      .outputOptions(['-map', '[vout]', '-map', '[aout]'])
+      .output(outputPath)
+      .on('end', resolve)
+      .on('error', (err) => {
+        // Retry without audio stream
+        if (err.message.includes('Stream specifier') || err.message.includes('matches no streams') || err.message.includes('audio')) {
+          const vOnly = segments.map((seg, i) => `[0:v]trim=start=${parseFloat(seg.start)||0}:end=${parseFloat(seg.end)},setpts=PTS-STARTPTS[v${i}]`)
+          const vOnlyParts = segments.map((_, i) => `[v${i}]`)
+          vOnly.push(`${vOnlyParts.join('')}concat=n=${n}:v=1:a=0[vout]`)
+          ffmpeg(inputPath)
+            .complexFilter(vOnly)
+            .outputOptions(['-map', '[vout]'])
+            .output(outputPath)
+            .on('end', resolve)
+            .on('error', reject)
+            .run()
+        } else {
+          reject(err)
+        }
+      })
+      .run()
+  })
+}
+
 // Scan a directory recursively for media files
 export function scanDirectory(dirPath, extensions) {
   const results = []

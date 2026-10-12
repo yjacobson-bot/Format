@@ -12,6 +12,7 @@ import {
   mixAudio,
   splitVideo,
   addWatermark,
+  trimMultiple,
   scanDirectory,
   detectHardwareEncoders,
 } from './ffmpegService.js'
@@ -115,6 +116,15 @@ export function registerHandlers(mainWindow) {
   ipcMain.handle('tools:splitVideo', async (_, { inputPath, outputDir, segmentDuration }) => {
     try {
       await splitVideo(inputPath, outputDir, segmentDuration)
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: err.message }
+    }
+  })
+
+  ipcMain.handle('tools:trimMultiple', async (_, { inputPath, outputPath, segments, exportMode }) => {
+    try {
+      await trimMultiple(inputPath, outputPath, segments, exportMode)
       return { success: true }
     } catch (err) {
       return { success: false, error: err.message }

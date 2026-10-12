@@ -107,6 +107,140 @@ function SplitPanel({ onClose }) {
   )
 }
 
+function MultiTrimPanel({ onClose }) {
+  const [inputFile, setInputFile] = useState('')
+  const [duration, setDuration] = useState(0)
+  const [outputPath, setOutputPath] = useState('')
+  const [segments, setSegments] = useState([{ start: '', end: '' }])
+  const [exportMode, setExportMode] = useState('single') // 'single' | 'multiple'
+  const [status, setStatus] = useState('')
+
+  const pickFile = async () => {
+    const paths = await window.electronAPI?.openFiles({
+      filters: [{ name: 'מדיה', extensions: ['mp4','avi','mkv','mov','mp3','wav','aac','m4a','flac'] }]
+    })
+    if (!paths?.[0]) return
+    setInputFile(paths[0])
+    setStatus('')
+    const probe = await window.electronAPI?.probeFile(paths[0])
+    if (probe?.success) setDuration(Math.floor(probe.data?.format?.duration || 0))
+  }
+
+  const addSegment = () => setSegments(s => [...s, { start: '', end: '' }])
+  const removeSegment = (i) => setSegments(s => s.filter((_, j) => j !== i))
+  const updateSegment = (i, field, val) => setSegments(s => s.map((seg, j) => j === i ? { ...seg, [field]: val } : seg))
+
+  const fmtTime = (sec) => {
+    const s = parseInt(sec) || 0
+    return `${String(Math.floor(s/3600)).padStart(2,'0')}:${String(Math.floor((s%3600)/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`
+  }
+
+  const handleRun = async () => {
+    if (!inputFile) { alert('יש לבחור קובץ.'); return }
+    if (!outputPath) { alert('יש לבחור נתיב פלט.'); return }
+    const parsed = segments.map(s => ({ start: parseFloat(s.start) || 0, end: parseFloat(s.end) || 0 }))
+    if (parsed.some(s => s.end <= s.start)) { alert('כל קטע חייב שהסוף יהיה אחרי ההתחלה.'); return }
+    setStatus('מעבד...')
+    const res = await window.electronAPI?.trimMultiple({
+      inputPath: inputFile,
+      outputPath,
+      segments: parsed,
+      exportMode,
+    })
+    setStatus(res?.success ? '✅ הושלם!' : `❌ ${res?.error}`)
+  }
+
+  const ext = inputFile ? inputFile.split('.').pop() : 'mp4'
+
+  return (
+    <div style={{ background: '#f8f8f8', border: '1px solid #ccc', borderRadius: 2, padding: 10 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+        <span style={{ fontSize: 12, fontWeight: 700, color: '#333' }}>✂️ חיתוך מרובה</span>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#888' }}>✕</button>
+      </div>
+      <div style={{ fontSize: 10, color: '#888', marginBottom: 8 }}>
+        בחר קטעים <strong>לשמור</strong> מתוך הקובץ — הם יחוברו לקובץ פלט אחד לפי הסדר.
+      </div>
+
+      {/* File picker */}
+      <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
+        <input type="text" value={inputFile ? inputFile.split(/[\\/]/).pop() : ''} readOnly
+          placeholder="בחר קובץ מדיה..." style={{ ...inputStyle, background: '#f5f5f5' }} />
+        <button onClick={pickFile} style={browseStyle}>עיון</button>
+      </div>
+      {duration > 0 && (
+        <div style={{ fontSize: 10, color: '#555', marginBottom: 8 }}>
+          משך: <strong>{fmtTime(duration)}</strong> ({duration} שניות)
+        </div>
+      )}
+
+      {/* Segments */}
+      <div style={{ marginBottom: 8 }}>
+        <div style={{ fontSize: 10, fontWeight: 700, color: '#555', marginBottom: 4 }}>קטעים לשמור:</div>
+        {segments.map((seg, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 5 }}>
+            <span style={{ fontSize: 10, color: '#888', minWidth: 16 }}>#{i+1}</span>
+            <input type="number" min={0} max={duration || 99999} step={0.1}
+              value={seg.start} onChange={e => updateSegment(i, 'start', e.target.value)}
+              placeholder="התחלה (שנ׳)" style={{ ...inputStyle, width: 90, flex: 'none' }} />
+            <span style={{ fontSize: 10, color: '#888' }}>—</span>
+            <input type="number" min={0} max={duration || 99999} step={0.1}
+              value={seg.end} onChange={e => updateSegment(i, 'end', e.target.value)}
+              placeholder="סוף (שנ׳)" style={{ ...inputStyle, width: 90, flex: 'none' }} />
+            {duration > 0 && seg.start !== '' && seg.end !== '' && (
+              <span style={{ fontSize: 9, color: '#6b7280', whiteSpace: 'nowrap' }}>
+                {fmtTime(seg.start)} – {fmtTime(seg.end)}
+              </span>
+            )}
+            {segments.length > 1 && (
+              <button onClick={() => removeSegment(i)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#dc2626', fontSize: 13, lineHeight: 1 }}>✕</button>
+            )}
+          </div>
+        ))}
+        <button onClick={addSegment}
+          style={{ fontSize: 10, color: '#1d4ed8', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0' }}>
+          + הוסף קטע
+        </button>
+      </div>
+
+      {/* Output */}
+      <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
+        <input type="text" value={outputPath} onChange={e => setOutputPath(e.target.value)}
+          placeholder="נתיב קובץ פלט..." style={inputStyle} />
+        <button onClick={async () => {
+          const p = await window.electronAPI?.saveFile({ filters: [{ name: 'Output', extensions: [ext] }] })
+          if (p) setOutputPath(p)
+        }} style={browseStyle}>עיון</button>
+      </div>
+
+      {/* Export mode toggle */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+        {[
+          { value: 'single',   label: 'קובץ אחד מחובר' },
+          { value: 'multiple', label: 'קבצים נפרדים' },
+        ].map(opt => (
+          <button key={opt.value} onClick={() => setExportMode(opt.value)} style={{
+            flex: 1, padding: '5px 6px', border: '1px solid',
+            borderColor: exportMode === opt.value ? '#2563eb' : '#d1d5db',
+            borderRadius: 4, background: exportMode === opt.value ? '#eff6ff' : '#fff',
+            cursor: 'pointer', fontSize: 10, fontWeight: exportMode === opt.value ? 700 : 400,
+            color: exportMode === opt.value ? '#1d4ed8' : '#374151',
+          }}>{opt.label}</button>
+        ))}
+      </div>
+      {exportMode === 'multiple' && (
+        <div style={{ fontSize: 9, color: '#6b7280', marginBottom: 6 }}>
+          כל קטע יישמר עם מספר לפני סיומת הקובץ (למשל output_1.mp4, output_2.mp4…)
+        </div>
+      )}
+
+      <button onClick={handleRun} style={btnStyle('#2563eb')}>בצע חיתוך</button>
+      {status && <div style={{ fontSize: 11, marginTop: 6, color: status.startsWith('✅') ? '#16a34a' : '#dc2626' }}>{status}</div>}
+    </div>
+  )
+}
+
 function WatermarkPanel({ onClose }) {
   const [videoPath, setVideoPath] = useState('')
   const [wmPath, setWmPath] = useState('')
@@ -161,9 +295,10 @@ function WatermarkPanel({ onClose }) {
 }
 
 const TOOLS = [
-  { id: 'merge', icon: '🔗', title: 'מיזוג וידאו', desc: 'חבר מספר קבצי וידאו לקובץ אחד' },
-  { id: 'split', icon: '✂️', title: 'פיצול וידאו', desc: 'פצל וידאו ארוך לפלחים קצרים לפי משך' },
-  { id: 'watermark', icon: '💧', title: 'הוסף סימן מים', desc: 'שכב תמונת סימן מים על קובץ וידאו' },
+  { id: 'merge',     icon: '🔗', title: 'מיזוג וידאו',    desc: 'חבר מספר קבצי וידאו לקובץ אחד' },
+  { id: 'split',     icon: '✂️', title: 'פיצול וידאו',    desc: 'פצל וידאו ארוך לפלחים קצרים לפי משך' },
+  { id: 'multitrim', icon: '🎯', title: 'חיתוך מרובה',    desc: 'בחר כמה קטעים מקובץ אחד — קובץ אחד או קבצים נפרדים' },
+  { id: 'watermark', icon: '💧', title: 'הוסף סימן מים',  desc: 'שכב תמונת סימן מים על קובץ וידאו' },
 ]
 
 export default function ToolsPage() {
@@ -209,8 +344,9 @@ export default function ToolsPage() {
           </>
         )}
 
-        {activeTool === 'merge' && <MergePanel onClose={() => setActiveTool(null)} />}
-        {activeTool === 'split' && <SplitPanel onClose={() => setActiveTool(null)} />}
+        {activeTool === 'merge'     && <MergePanel     onClose={() => setActiveTool(null)} />}
+        {activeTool === 'split'     && <SplitPanel     onClose={() => setActiveTool(null)} />}
+        {activeTool === 'multitrim' && <MultiTrimPanel onClose={() => setActiveTool(null)} />}
         {activeTool === 'watermark' && <WatermarkPanel onClose={() => setActiveTool(null)} />}
       </div>
     </div>
