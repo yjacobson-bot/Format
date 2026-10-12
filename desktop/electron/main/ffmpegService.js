@@ -77,11 +77,25 @@ export function buildFFmpegCommand(inputPath, outputPath, settings, formatArgs) 
 
   if (settings.grayscale) vfFilters.push('hue=s=0')
 
-  if (settings.watermark) {
+  if (settings.watermarkPath) {
+    cmd = cmd.input(settings.watermarkPath)
+    const scale = settings.watermarkScale || 0.2
+    const posMap = {
+      topleft: '10:10', topright: 'W-w-10:10',
+      bottomleft: '10:H-h-10', bottomright: 'W-w-10:H-h-10',
+      center: '(W-w)/2:(H-h)/2',
+    }
+    const pos = posMap[settings.watermarkPosition || 'topleft']
+    const wmFilter = `[1:v]scale=iw*${scale}:-1[wm]`
+    const baseFilter = vfFilters.length > 0
+      ? `[0:v]${vfFilters.join(',')}[mainv];${wmFilter};[mainv][wm]overlay=${pos}`
+      : `${wmFilter};[0:v][wm]overlay=${pos}`
+    cmd = cmd.complexFilter([baseFilter]).outputOptions(['-c:a', 'copy'])
+  } else if (settings.watermark) {
     vfFilters.push(`movie=${settings.watermark.replace(/\\/g, '/')},scale=200:-1[wm];[in][wm]overlay=10:10[out]`)
   }
 
-  if (vfFilters.length > 0) {
+  if (!settings.watermarkPath && vfFilters.length > 0) {
     cmd = cmd.videoFilters(vfFilters)
   }
 
@@ -380,18 +394,22 @@ export async function splitVideo(inputPath, outputDir, segmentDuration) {
   })
 }
 
-export async function addWatermark(videoPath, watermarkPath, outputPath, position = 'topleft') {
-  const positions = {
-    topleft: 'overlay=10:10',
-    topright: 'overlay=W-w-10:10',
-    bottomleft: 'overlay=10:H-h-10',
+export async function addWatermark(videoPath, watermarkPath, outputPath, position = 'topleft', wmScale = 0.2) {
+  const overlayPos = {
+    topleft:     'overlay=10:10',
+    topright:    'overlay=W-w-10:10',
+    bottomleft:  'overlay=10:H-h-10',
     bottomright: 'overlay=W-w-10:H-h-10',
-    center: 'overlay=(W-w)/2:(H-h)/2',
+    center:      'overlay=(W-w)/2:(H-h)/2',
   }
+  const pos = overlayPos[position] || overlayPos.topleft
+  // Scale watermark to wmScale fraction of video width, keep aspect ratio
+  const filter = `[1:v]scale=iw*${wmScale}:-1[wm];[0:v][wm]${pos}`
   return new Promise((resolve, reject) => {
     ffmpeg(videoPath)
       .input(watermarkPath)
-      .complexFilter([`${positions[position] || positions.topleft}`])
+      .complexFilter([filter])
+      .outputOptions(['-c:a', 'copy'])
       .output(outputPath)
       .on('end', resolve)
       .on('error', reject)

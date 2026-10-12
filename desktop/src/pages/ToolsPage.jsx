@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react'
+import { useStore } from '../store/useStore'
 
 const btnStyle = (color) => ({
   background: color, color: '#fff', border: 'none', borderRadius: 2,
@@ -326,17 +327,24 @@ export function MultiTrimPanel({ onClose, filePath: extFile, duration: extDur })
 }
 
 function WatermarkPanel({ onClose }) {
+  const addTasks = useStore(s => s.addTasks)
   const [videoPath, setVideoPath] = useState('')
   const [wmPath, setWmPath] = useState('')
-  const [outputPath, setOutputPath] = useState('')
   const [position, setPosition] = useState('topleft')
+  const [wmScale, setWmScale] = useState(0.2)
   const [status, setStatus] = useState('')
 
-  const handleApply = async () => {
-    if (!videoPath || !wmPath || !outputPath) { alert('יש למלא את כל השדות.'); return }
-    setStatus('מעבד...')
-    const res = await window.electronAPI?.addWatermark({ videoPath, watermarkPath: wmPath, outputPath, position })
-    setStatus(res?.success ? '✅ הושלם!' : `❌ ${res?.error}`)
+  const videoUrl = videoPath ? `file:///${videoPath.replace(/\\/g, '/')}` : null
+
+  const handleApply = () => {
+    if (!videoPath || !wmPath) { alert('יש לבחור קובץ וידאו ותמונת סימן מים.'); return }
+    const outputFormat = { id: 'mp4', label: 'MP4 עם סימן מים', ext: 'mp4', ffmpegArgs: [] }
+    const settings = { watermarkPath: wmPath, watermarkPosition: position, watermarkScale: wmScale }
+    addTasks(
+      [{ path: videoPath, name: videoPath.split(/[\\/]/).pop(), size: 0 }],
+      outputFormat, settings, 'video'
+    )
+    setStatus('✅ נוסף לתור ההמרות!')
   }
 
   return (
@@ -345,18 +353,35 @@ function WatermarkPanel({ onClose }) {
         <span style={{ fontSize: 12, fontWeight: 700, color: '#333' }}>💧 הוסף סימן מים</span>
         <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#888' }}>✕</button>
       </div>
-      {[
-        { label: 'קובץ וידאו', value: videoPath, set: setVideoPath, ext: ['mp4','avi','mkv','mov'] },
-        { label: 'תמונת סימן מים (PNG)', value: wmPath, set: setWmPath, ext: ['png','jpg'] },
-      ].map(f => (
-        <div key={f.label} style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
-          <input type="text" value={f.value ? f.value.split(/[\\/]/).pop() : ''} readOnly placeholder={f.label + '...'} style={{ ...inputStyle, background: '#f5f5f5' }} />
-          <button onClick={async () => {
-            const paths = await window.electronAPI?.openFiles({ filters: [{ name: f.label, extensions: f.ext }] })
-            if (paths?.[0]) f.set(paths[0])
-          }} style={browseStyle}>עיון</button>
+
+      {/* Video file */}
+      <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
+        <input type="text" value={videoPath ? videoPath.split(/[\\/]/).pop() : ''} readOnly
+          placeholder="קובץ וידאו..." style={{ ...inputStyle, background: '#f5f5f5' }} />
+        <button onClick={async () => {
+          const paths = await window.electronAPI?.openFiles({ filters: [{ name: 'וידאו', extensions: ['mp4','avi','mkv','mov'] }] })
+          if (paths?.[0]) setVideoPath(paths[0])
+        }} style={browseStyle}>עיון</button>
+      </div>
+
+      {/* Video preview */}
+      {videoUrl && (
+        <div style={{ marginBottom: 8 }}>
+          <video src={videoUrl} controls style={{ width: '100%', maxHeight: 140, background: '#000', borderRadius: 2 }} />
         </div>
-      ))}
+      )}
+
+      {/* Watermark image */}
+      <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
+        <input type="text" value={wmPath ? wmPath.split(/[\\/]/).pop() : ''} readOnly
+          placeholder="תמונת סימן מים (PNG)..." style={{ ...inputStyle, background: '#f5f5f5' }} />
+        <button onClick={async () => {
+          const paths = await window.electronAPI?.openFiles({ filters: [{ name: 'תמונה', extensions: ['png','jpg'] }] })
+          if (paths?.[0]) setWmPath(paths[0])
+        }} style={browseStyle}>עיון</button>
+      </div>
+
+      {/* Position */}
       <div style={{ marginBottom: 8 }}>
         <div style={{ fontSize: 10, fontWeight: 600, color: '#666', marginBottom: 3 }}>מיקום</div>
         <select value={position} onChange={e => setPosition(e.target.value)} style={{ ...inputStyle, flex: 'none', width: '100%' }}>
@@ -369,15 +394,19 @@ function WatermarkPanel({ onClose }) {
           ].map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
         </select>
       </div>
-      <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
-        <input type="text" value={outputPath} readOnly placeholder="קובץ פלט..." style={{ ...inputStyle, background: '#f5f5f5' }} />
-        <button onClick={async () => {
-          const p = await window.electronAPI?.saveFile({ filters: [{ name: 'MP4', extensions: ['mp4'] }] })
-          if (p) setOutputPath(p)
-        }} style={browseStyle}>עיון</button>
+
+      {/* Scale slider */}
+      <div style={{ marginBottom: 10 }}>
+        <div style={{ fontSize: 10, fontWeight: 600, color: '#666', marginBottom: 3 }}>
+          גודל סימן מים: {Math.round(wmScale * 100)}%
+        </div>
+        <input type="range" min={5} max={50} step={1} value={Math.round(wmScale * 100)}
+          onChange={e => setWmScale(parseInt(e.target.value) / 100)}
+          style={{ width: '100%' }} />
       </div>
-      <button onClick={handleApply} style={btnStyle('#2563eb')}>הוסף סימן מים</button>
-      {status && <div style={{ fontSize: 11, marginTop: 6, color: status.startsWith('✅') ? '#16a34a' : '#dc2626' }}>{status}</div>}
+
+      <button onClick={handleApply} style={btnStyle('#2563eb')}>הוסף לתור</button>
+      {status && <div style={{ fontSize: 11, marginTop: 6, color: '#16a34a' }}>{status}</div>}
     </div>
   )
 }
