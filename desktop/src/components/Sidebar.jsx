@@ -10,20 +10,20 @@ const DVD_FORMATS = [
 ]
 
 const TOOLS_FORMATS = [
-  { id: 'merge',         label: 'מיזוג וידאו',    icon: '🔗', ext: 'mp4' },
-  { id: 'merge_audio',   label: 'מיזוג אודיו',    icon: '🎵', ext: 'mp3' },
-  { id: 'extract_audio', label: 'חלץ אודיו',      icon: '🎤', ext: 'mp3' },
-  { id: 'mute',          label: 'הסרת שמע',        icon: '🔇', ext: 'mp4' },
-  { id: 'gif',           label: 'וידאו → GIF',    icon: '🖼️', ext: 'gif' },
-  { id: 'rotate90',      label: 'סיבוב 90°',      icon: '🔄', ext: 'mp4' },
-  { id: 'rotate180',     label: 'סיבוב 180°',     icon: '🔃', ext: 'mp4' },
-  { id: 'flip_h',        label: 'היפוך אופקי',    icon: '↔️', ext: 'mp4' },
-  { id: 'flip_v',        label: 'היפוך אנכי',     icon: '↕️', ext: 'mp4' },
-  { id: 'speed2x',       label: 'מהירות ×2',      icon: '⏩', ext: 'mp4' },
-  { id: 'speed05x',      label: 'האטה ×0.5',      icon: '⏪', ext: 'mp4' },
-  { id: 'normalize',     label: 'נרמול שמע',      icon: '🔊', ext: 'mp3' },
-  { id: 'fadein',        label: 'Fade In',         icon: '📈', ext: 'mp3' },
-  { id: 'fadeout',       label: 'Fade Out',        icon: '📉', ext: 'mp3' },
+  { id: 'merge',         label: 'מיזוג וידאו',    icon: '🔗', ext: 'mp4', ffmpegArgs: [] },
+  { id: 'merge_audio',   label: 'מיזוג אודיו',    icon: '🎵', ext: 'mp3', ffmpegArgs: [] },
+  { id: 'extract_audio', label: 'חלץ אודיו',      icon: '🎤', ext: 'mp3', ffmpegArgs: ['-vn', '-c:a', 'libmp3lame', '-q:a', '2'] },
+  { id: 'mute',          label: 'הסרת שמע',        icon: '🔇', ext: 'mp4', ffmpegArgs: ['-an', '-c:v', 'copy'] },
+  { id: 'gif',           label: 'וידאו → GIF',    icon: '🖼️', ext: 'gif', ffmpegArgs: ['-vf', 'fps=10,scale=480:-1:flags=lanczos', '-loop', '0'] },
+  { id: 'rotate90',      label: 'סיבוב 90°',      icon: '🔄', ext: 'mp4', ffmpegArgs: ['-vf', 'transpose=1', '-c:a', 'copy'] },
+  { id: 'rotate180',     label: 'סיבוב 180°',     icon: '🔃', ext: 'mp4', ffmpegArgs: ['-vf', 'transpose=1,transpose=1', '-c:a', 'copy'] },
+  { id: 'flip_h',        label: 'היפוך אופקי',    icon: '↔️', ext: 'mp4', ffmpegArgs: ['-vf', 'hflip', '-c:a', 'copy'] },
+  { id: 'flip_v',        label: 'היפוך אנכי',     icon: '↕️', ext: 'mp4', ffmpegArgs: ['-vf', 'vflip', '-c:a', 'copy'] },
+  { id: 'speed2x',       label: 'מהירות ×2',      icon: '⏩', ext: 'mp4', ffmpegArgs: ['-vf', 'setpts=0.5*PTS', '-af', 'atempo=2.0'] },
+  { id: 'speed05x',      label: 'האטה ×0.5',      icon: '⏪', ext: 'mp4', ffmpegArgs: ['-vf', 'setpts=2.0*PTS', '-af', 'atempo=0.5'] },
+  { id: 'normalize',     label: 'נרמול שמע',      icon: '🔊', ext: 'mp3', ffmpegArgs: ['-af', 'dynaudnorm', '-c:a', 'libmp3lame', '-q:a', '2'] },
+  { id: 'fadein',        label: 'Fade In',         icon: '📈', ext: 'mp3', ffmpegArgs: ['-af', 'afade=t=in:d=3', '-c:a', 'libmp3lame', '-q:a', '2'] },
+  { id: 'fadeout',       label: 'Fade Out',        icon: '📉', ext: 'mp3', ffmpegArgs: ['-af', 'afade=t=out:d=3', '-c:a', 'libmp3lame', '-q:a', '2'] },
 ]
 
 const CATEGORIES = [
