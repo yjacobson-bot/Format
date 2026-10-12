@@ -33,36 +33,12 @@ jobs:
           $installer = "$env:TEMP\lo_installer.exe"
           Write-Host "Downloading LibreOffice Portable..."
           Invoke-WebRequest -Uri $url -OutFile $installer -UseBasicParsing
-          Write-Host "Download complete. Size: $((Get-Item $installer).Length / 1MB) MB"
-          New-Item -ItemType Directory -Force -Path "resources" | Out-Null
-          Write-Host "Extracting (this may take a few minutes)..."
-          $proc = Start-Process -FilePath $installer -ArgumentList "/DESTINATION=`"$PWD\resources`"", "/SILENT" -PassThru
-          # Wait up to 15 minutes for extraction
-          $timeout = 900
-          $elapsed = 0
-          while (!$proc.HasExited -and $elapsed -lt $timeout) {
-            Start-Sleep -Seconds 15
-            $elapsed += 15
-            Write-Host "Extracting... ${elapsed}s elapsed"
-          }
-          if (!$proc.HasExited) {
-            $proc.Kill()
-            throw "LibreOffice extraction timed out after ${timeout}s"
-          }
-          Write-Host "Extractor exited with code: $($proc.ExitCode)"
-          # PortableApps extracts to resources\LibreOfficePortable — rename to libreoffice
-          if (Test-Path "resources\LibreOfficePortable") {
-            Rename-Item "resources\LibreOfficePortable" "libreoffice"
-            Write-Host "Renamed LibreOfficePortable -> libreoffice"
-          } elseif (Test-Path "resources\libreoffice") {
-            Write-Host "Already at resources\libreoffice"
-          } else {
-            Write-Host "Contents of resources:"
-            Get-ChildItem "resources" -ErrorAction SilentlyContinue
-            exit 1
-          }
+          Write-Host "Download complete. Size: $([math]::Round((Get-Item $installer).Length / 1MB, 1)) MB"
+          New-Item -ItemType Directory -Force -Path "resources\libreoffice" | Out-Null
+          Write-Host "Extracting with 7-Zip..."
+          & "C:\Program Files\7-Zip\7z.exe" x $installer -o"resources\libreoffice" -y
           Write-Host "Done. Files:"
-          Get-ChildItem "resources\libreoffice" | Select-Object -First 5
+          Get-ChildItem "resources\libreoffice" | Select-Object -First 8
         working-directory: desktop
 
       - name: Build Windows EXE
