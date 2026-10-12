@@ -83,7 +83,7 @@ export const useStore = create((set, get) => ({
       outputFormat: { id: 'merge', label: 'מיזוג', ext: outputExt, ffmpegArgs: [] },
       outputPath: null,
       settings: { ...settings, joinFiles: files.map(f => f.path) },
-      category: 'video',
+      category: ['mp3','wav','aac','m4a','flac','ogg','opus'].includes(outputExt) ? 'audio' : 'video',
       status: 'pending',
       progress: 0,
       error: null,

@@ -39,31 +39,33 @@ jobs:
       - name: Delete existing release and tag if present
         shell: bash
         run: |
-          gh release delete v2.5.0 --yes --cleanup-tag 2>/dev/null || true
+          gh release delete v2.5.1 --yes --cleanup-tag 2>/dev/null || true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v2.5.0
-          name: פורמט נקי v2.5.0
+          tag_name: v2.5.1
+          name: פורמט נקי v2.5.1
           draft: false
           prerelease: false
           files: desktop/dist/*.exe
           body: |
-            ## פורמט נקי v2.5.0 — Windows
+            ## פורמט נקי v2.5.1 — Windows
 
             **מתקין:** הורד `*-Setup.exe` והתקן רגיל.
             **נייד:** הורד `*-Portable.exe` — הפעל ישירות ללא התקנה, לא כותב לרג'יסטרי.
 
-            ### תיקוני באגים בגירסה 2.5
-            - תיקון קריטי: שימוש בכלי (היפוך/סיבוב/gif) יחד עם הגדרות רזולוציה גרם לכשל ffmpeg (שני -vf)
-            - תיקון: חיתוך מרובה מתוך חלון המרה לא הצליח להריץ — נתיב פלט נוצר אוטומטי
-            - תיקון: כפתור ▶ בחיתוך מרובה צבר event listeners עם לחיצות חוזרות
-            - תיקון: הוספת קטע כשהמשך הקובץ עדיין 0 גרמה לשגיאת validation
-            - תיקון: complexFilter של סימן מים לא תייג פלט — edge cases עם streams מרובים
-            - תיקון: GPU fallback לא מחק קובץ פלט חלקי לפני הרצה מחדש
+            ### תיקוני באגים בגירסה 2.5.1
+            - תיקון: בוחר קבצי כתוביות וסימן מים בהגדרות לא עבד — שומר undefined במקום נתיב
+            - תיקון: תצוגת מידע קבצים (משך, רזולוציה, קודק) תמיד הציגה "—" — תגובת probeFile לא נפרקה
+            - תיקון: TrimEditor השתמש ב-300 שניות ברירת מחדל לכל קובץ — נובע מאותה בעיה
+            - תיקון: המרת אודיו (MP3/AAC/FLAC) נכשלה עם "Option preset not found"
+            - תיקון: חיתוך מרובה על קובץ אודיו נכשל פעמיים — retry בנה פילטרי וידאו במקום אודיו
+            - תיקון: מיזוג אודיו סומן כ-category 'video' בתור ההמרות
+            - תיקון: GPU fallback התקדמות תמיד הציגה 0% — totalDuration לא הועבר לfallback
+            - תיקון: נתיבים עם גרש במיזוג קבצים — escape שגוי בקובץ concat
 
             ### חדש בגירסה 2.4
             - סימן מים: תצוגה מקדימה חיה עם הסימן מים מוטמע, סליידר גודל 1–30%, מוסיף לתור ההמרות

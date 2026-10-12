@@ -117,9 +117,10 @@ export function buildFFmpegCommand(inputPath, outputPath, settings, formatArgs) 
     cmd = cmd.outputOptions(['-q:v', settings.quality])
   }
 
-  // Use fast preset for CPU encoding if not explicitly set
+  // Use fast preset for CPU encoding if not explicitly set (skip for audio-only outputs)
   const isGpuCodec = resolvedVideoCodec && (resolvedVideoCodec.includes('nvenc') || resolvedVideoCodec.includes('qsv') || resolvedVideoCodec.includes('amf'))
-  if (!isGpuCodec && !settings.preset && !settings.videoCodec) {
+  const hasNoVideoFlag = formatArgs && formatArgs.includes('-vn')
+  if (!isGpuCodec && !settings.preset && !settings.videoCodec && !hasNoVideoFlag) {
     cmd = cmd.outputOptions(['-preset', 'fast'])
   }
 
@@ -260,10 +261,16 @@ export function startConversion(taskId, inputPath, outputPath, settings, formatA
     runCmd(taskId, cpuCmd, 0, onProgress, onComplete, onError, null, isBackground)
   }
 
-  // Get duration for accurate progress
+  // Get duration for accurate progress (captured in closure for fallback too)
   probeFile(inputPath).then(meta => {
     const totalDuration = meta?.format?.duration || 0
-    runCmd(taskId, cmd, totalDuration, onProgress, onComplete, onError, useGpu ? fallbackToCpu : null, isBackground)
+    const fallbackWithDuration = useGpu ? () => {
+      try { if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath) } catch {}
+      const cpuSettings = { ...settings, hwAccel: 'cpu' }
+      const cpuCmd = buildFFmpegCommand(inputPath, outputPath, cpuSettings, formatArgs)
+      runCmd(taskId, cpuCmd, totalDuration, onProgress, onComplete, onError, null, isBackground)
+    } : null
+    runCmd(taskId, cmd, totalDuration, onProgress, onComplete, onError, fallbackWithDuration, isBackground)
   }).catch(() => {
     runCmd(taskId, cmd, 0, onProgress, onComplete, onError, useGpu ? fallbackToCpu : null, isBackground)
   })
@@ -342,7 +349,7 @@ export async function mixAudio(inputPaths, outputPath, weights, settings, onProg
 export async function mergeVideos(inputPaths, outputPath, settings, onProgress) {
   return new Promise((resolve, reject) => {
     const listFile = outputPath + '.txt'
-    const listContent = inputPaths.map(p => `file '${p.replace(/'/g, "'\\''")}'`).join('\n')
+    const listContent = inputPaths.map(p => `file '${p.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`).join('\n')
     fs.writeFileSync(listFile, listContent)
 
     let cmd = ffmpeg()
@@ -462,18 +469,35 @@ export async function trimMultiple(inputPath, outputPath, segments, exportMode =
       .output(outputPath)
       .on('end', resolve)
       .on('error', (err) => {
-        // Retry without audio stream
-        if (err.message.includes('Stream specifier') || err.message.includes('matches no streams') || err.message.includes('audio')) {
-          const vOnly = segments.map((seg, i) => `[0:v]trim=start=${parseFloat(seg.start)||0}:end=${parseFloat(seg.end)},setpts=PTS-STARTPTS[v${i}]`)
-          const vOnlyParts = segments.map((_, i) => `[v${i}]`)
-          vOnly.push(`${vOnlyParts.join('')}concat=n=${n}:v=1:a=0[vout]`)
-          ffmpeg(inputPath)
-            .complexFilter(vOnly)
-            .outputOptions(['-map', '[vout]'])
-            .output(outputPath)
-            .on('end', resolve)
-            .on('error', reject)
-            .run()
+        const msg = err.message
+        if (msg.includes('Stream specifier') || msg.includes('matches no streams') || msg.includes('audio')) {
+          // Detect whether the error is video-missing (audio-only file) or audio-missing
+          const isVideoMissing = msg.includes('[0:v]') || msg.includes('video')
+          if (isVideoMissing) {
+            // Audio-only input — retry with atrim instead of trim
+            const aOnly = segments.map((seg, i) => `[0:a]atrim=start=${parseFloat(seg.start)||0}:end=${parseFloat(seg.end)},asetpts=PTS-STARTPTS[a${i}]`)
+            const aOnlyParts = segments.map((_, i) => `[a${i}]`)
+            aOnly.push(`${aOnlyParts.join('')}concat=n=${n}:v=0:a=1[aout]`)
+            ffmpeg(inputPath)
+              .complexFilter(aOnly)
+              .outputOptions(['-map', '[aout]'])
+              .output(outputPath)
+              .on('end', resolve)
+              .on('error', reject)
+              .run()
+          } else {
+            // Video-only input — retry without audio map
+            const vOnly = segments.map((seg, i) => `[0:v]trim=start=${parseFloat(seg.start)||0}:end=${parseFloat(seg.end)},setpts=PTS-STARTPTS[v${i}]`)
+            const vOnlyParts = segments.map((_, i) => `[v${i}]`)
+            vOnly.push(`${vOnlyParts.join('')}concat=n=${n}:v=1:a=0[vout]`)
+            ffmpeg(inputPath)
+              .complexFilter(vOnly)
+              .outputOptions(['-map', '[vout]'])
+              .output(outputPath)
+              .on('end', resolve)
+              .on('error', reject)
+              .run()
+          }
         } else {
           reject(err)
         }

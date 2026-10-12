@@ -401,7 +401,7 @@ function VideoSettings({ settings, onChange, filePath, duration, availableHW }) 
                 style={{ fontSize: 10, padding: '2px 4px', border: '1px solid #bbb', borderRadius: 2, width: 120 }} />
               <button onClick={async () => {
                 const f = await window.electronAPI?.openFiles({ multiple: false })
-                if (f?.[0]) onChange({ ...s, subtitleFile: f[0].path })
+                if (f?.[0]) onChange({ ...s, subtitleFile: f[0] })
               }} style={{ fontSize: 10, padding: '1px 6px', cursor: 'pointer', background: '#f0f0f0', border: '1px solid #bbb', borderRadius: 2 }}>
                 📂
               </button>
@@ -414,7 +414,7 @@ function VideoSettings({ settings, onChange, filePath, duration, availableHW }) 
                 style={{ fontSize: 10, padding: '2px 4px', border: '1px solid #bbb', borderRadius: 2, width: 120 }} />
               <button onClick={async () => {
                 const f = await window.electronAPI?.openFiles({ multiple: false })
-                if (f?.[0]) onChange({ ...s, watermarkFile: f[0].path })
+                if (f?.[0]) onChange({ ...s, watermarkFile: f[0] })
               }} style={{ fontSize: 10, padding: '1px 6px', cursor: 'pointer', background: '#f0f0f0', border: '1px solid #bbb', borderRadius: 2 }}>📂</button>
               {s.watermarkFile && <button onClick={() => onChange({ ...s, watermarkFile: null })} style={{ fontSize: 10, padding: '1px 6px', cursor: 'pointer', background: '#f0f0f0', border: '1px solid #bbb', borderRadius: 2 }}>✕</button>}
             </div>
@@ -493,13 +493,14 @@ export default function ConversionSetup({ availableHW = [] }) {
     if (probedInfo[file.path]) return
     try {
       const meta = await window.electronAPI?.probeFile(file.path)
-      if (!meta) return
-      const videoStream = meta.streams?.find(s => s.codec_type === 'video')
-      const audioStream = meta.streams?.find(s => s.codec_type === 'audio')
+      if (!meta?.success) return
+      const data = meta.data
+      const videoStream = data?.streams?.find(s => s.codec_type === 'video')
+      const audioStream = data?.streams?.find(s => s.codec_type === 'audio')
       setProbedInfo(prev => ({
         ...prev,
         [file.path]: {
-          duration: meta.format?.duration || null,
+          duration: data?.format?.duration || null,
           resolution: videoStream ? `${videoStream.width}×${videoStream.height}` : null,
           codec: videoStream?.codec_name || null,
           audioCodec: audioStream?.codec_name || null,
