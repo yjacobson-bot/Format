@@ -147,35 +147,32 @@ function TrimEditor({ filePath, duration, trim, onChange, category }) {
             pointerEvents: 'none',
           }} />
 
-          {/* Start handle */}
-          <div
-            onMouseDown={e => startDrag('start', e)}
-            style={{
-              position: 'absolute', top: -4, width: 12, height: 36,
-              left: `calc(${(start / dur) * 100}% - 6px)`,
-              background: '#0066cc', borderRadius: 3, cursor: 'ew-resize',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              zIndex: 2,
-            }}>
-            <div style={{ width: 2, height: 14, background: 'rgba(255,255,255,0.7)', borderRadius: 1 }} />
-          </div>
+          {/* Start handle — green ▶ */}
+          <div onMouseDown={e => startDrag('start', e)} title="התחלה" style={{
+            position: 'absolute', top: -4, width: 14, height: 36,
+            left: `calc(${(start / dur) * 100}% - 7px)`,
+            background: '#16a34a', borderRadius: '3px 0 0 3px', cursor: 'ew-resize',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 2, fontSize: 8, color: '#fff', userSelect: 'none',
+          }}>▶</div>
 
-          {/* End handle */}
-          <div
-            onMouseDown={e => startDrag('end', e)}
-            style={{
-              position: 'absolute', top: -4, width: 12, height: 36,
-              left: `calc(${(end / dur) * 100}% - 6px)`,
-              background: '#0066cc', borderRadius: 3, cursor: 'ew-resize',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              zIndex: 2,
-            }}>
-            <div style={{ width: 2, height: 14, background: 'rgba(255,255,255,0.7)', borderRadius: 1 }} />
-          </div>
+          {/* End handle — red ◀ */}
+          <div onMouseDown={e => startDrag('end', e)} title="סוף" style={{
+            position: 'absolute', top: -4, width: 14, height: 36,
+            left: `calc(${(end / dur) * 100}% - 7px)`,
+            background: '#dc2626', borderRadius: '0 3px 3px 0', cursor: 'ew-resize',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 2, fontSize: 8, color: '#fff', userSelect: 'none',
+          }}>◀</div>
         </div>
 
+        {/* Handle labels */}
+        <div style={{ position: 'relative', height: 14, fontSize: 9, marginTop: 1 }}>
+          <span style={{ position: 'absolute', left: `${(start / dur) * 100}%`, transform: 'translateX(-50%)', color: '#16a34a', fontWeight: 700, whiteSpace: 'nowrap' }}>התחלה</span>
+          <span style={{ position: 'absolute', left: `${(end / dur) * 100}%`, transform: 'translateX(-50%)', color: '#dc2626', fontWeight: 700, whiteSpace: 'nowrap' }}>סוף</span>
+        </div>
         {/* Time labels */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: '#888', marginTop: 2 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: '#888', marginTop: 1 }}>
           <span>0:00</span>
           <span>{fmtTime(dur / 2)}</span>
           <span>{fmtTime(dur)}</span>

@@ -198,18 +198,22 @@ function SegmentSlider({ seg, index, dur, onUpdate, onRemove, canRemove, playerR
             width: `${Math.max(0, (end - start) / dur) * 100}%`,
             background: color + '55', borderLeft: `2px solid ${color}`, borderRight: `2px solid ${color}`,
           }} />
-          {/* start handle */}
-          <div onMouseDown={e => startDrag('start', e)} style={{
-            position: 'absolute', top: -2, width: 10, height: 22,
-            left: `calc(${(start / dur) * 100}% - 5px)`,
-            background: color, borderRadius: 2, cursor: 'ew-resize', zIndex: 2,
-          }} />
-          {/* end handle */}
-          <div onMouseDown={e => startDrag('end', e)} style={{
-            position: 'absolute', top: -2, width: 10, height: 22,
-            left: `calc(${(end / dur) * 100}% - 5px)`,
-            background: color, borderRadius: 2, cursor: 'ew-resize', zIndex: 2,
-          }} />
+          {/* start handle — ▶ */}
+          <div onMouseDown={e => startDrag('start', e)} title="התחלה" style={{
+            position: 'absolute', top: -2, width: 12, height: 22,
+            left: `calc(${(start / dur) * 100}% - 6px)`,
+            background: '#16a34a', borderRadius: '2px 0 0 2px', cursor: 'ew-resize', zIndex: 2,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 7, color: '#fff', userSelect: 'none',
+          }}>▶</div>
+          {/* end handle — ◀ */}
+          <div onMouseDown={e => startDrag('end', e)} title="סוף" style={{
+            position: 'absolute', top: -2, width: 12, height: 22,
+            left: `calc(${(end / dur) * 100}% - 6px)`,
+            background: '#dc2626', borderRadius: '0 2px 2px 0', cursor: 'ew-resize', zIndex: 2,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 7, color: '#fff', userSelect: 'none',
+          }}>◀</div>
         </div>
       )}
     </div>
