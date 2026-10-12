@@ -10,20 +10,20 @@ const DVD_FORMATS = [
 ]
 
 const TOOLS_FORMATS = [
-  { id: 'merge',         label: 'מיזוג וידאו',    icon: '🔗' },
-  { id: 'merge_audio',   label: 'מיזוג אודיו',    icon: '🎵' },
-  { id: 'extract_audio', label: 'חלץ אודיו',      icon: '🎤' },
-  { id: 'mute',          label: 'הסרת שמע',        icon: '🔇' },
-  { id: 'gif',           label: 'וידאו → GIF',    icon: '🖼️' },
-  { id: 'rotate90',      label: 'סיבוב 90°',      icon: '🔄' },
-  { id: 'rotate180',     label: 'סיבוב 180°',     icon: '🔃' },
-  { id: 'flip_h',        label: 'היפוך אופקי',    icon: '↔️' },
-  { id: 'flip_v',        label: 'היפוך אנכי',     icon: '↕️' },
-  { id: 'speed2x',       label: 'מהירות ×2',      icon: '⏩' },
-  { id: 'speed05x',      label: 'האטה ×0.5',      icon: '⏪' },
-  { id: 'normalize',     label: 'נרמול שמע',      icon: '🔊' },
-  { id: 'fadein',        label: 'Fade In',         icon: '📈' },
-  { id: 'fadeout',       label: 'Fade Out',        icon: '📉' },
+  { id: 'merge',         label: 'מיזוג וידאו',    icon: '🔗', ext: 'mp4' },
+  { id: 'merge_audio',   label: 'מיזוג אודיו',    icon: '🎵', ext: 'mp3' },
+  { id: 'extract_audio', label: 'חלץ אודיו',      icon: '🎤', ext: 'mp3' },
+  { id: 'mute',          label: 'הסרת שמע',        icon: '🔇', ext: 'mp4' },
+  { id: 'gif',           label: 'וידאו → GIF',    icon: '🖼️', ext: 'gif' },
+  { id: 'rotate90',      label: 'סיבוב 90°',      icon: '🔄', ext: 'mp4' },
+  { id: 'rotate180',     label: 'סיבוב 180°',     icon: '🔃', ext: 'mp4' },
+  { id: 'flip_h',        label: 'היפוך אופקי',    icon: '↔️', ext: 'mp4' },
+  { id: 'flip_v',        label: 'היפוך אנכי',     icon: '↕️', ext: 'mp4' },
+  { id: 'speed2x',       label: 'מהירות ×2',      icon: '⏩', ext: 'mp4' },
+  { id: 'speed05x',      label: 'האטה ×0.5',      icon: '⏪', ext: 'mp4' },
+  { id: 'normalize',     label: 'נרמול שמע',      icon: '🔊', ext: 'mp3' },
+  { id: 'fadein',        label: 'Fade In',         icon: '📈', ext: 'mp3' },
+  { id: 'fadeout',       label: 'Fade Out',        icon: '📉', ext: 'mp3' },
 ]
 
 const CATEGORIES = [
