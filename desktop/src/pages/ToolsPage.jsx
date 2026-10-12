@@ -156,11 +156,17 @@ function SegmentSlider({ seg, index, dur, onUpdate, onRemove, canRemove, playerR
   function playSegment() {
     const player = playerRef.current
     if (!player) return
+    if (player._segmentStop) { player.removeEventListener('timeupdate', player._segmentStop); player._segmentStop = null }
     player.currentTime = start
     player.play()
     const stop = () => {
-      if (player.currentTime >= end) { player.pause(); player.removeEventListener('timeupdate', stop) }
+      if (player.currentTime >= end) {
+        player.pause()
+        player.removeEventListener('timeupdate', stop)
+        player._segmentStop = null
+      }
     }
+    player._segmentStop = stop
     player.addEventListener('timeupdate', stop)
   }
 
@@ -248,20 +254,31 @@ export function MultiTrimPanel({ onClose, filePath: extFile, duration: extDur })
   }
 
   const addSegment = () => {
+    if (!duration) { alert('יש להמתין לטעינת הקובץ.'); return }
     const last = segments[segments.length - 1]
     const lastEnd = parseFloat(last?.end) || 0
-    setSegments(s => [...s, { start: lastEnd.toFixed(1), end: Math.min(duration, lastEnd + 30).toFixed(1) }])
+    const newEnd = Math.min(duration, lastEnd + 30)
+    if (newEnd <= lastEnd) { alert('אין מקום לקטע נוסף — הגעת לסוף הקובץ.'); return }
+    setSegments(s => [...s, { start: lastEnd.toFixed(1), end: newEnd.toFixed(1) }])
   }
   const removeSegment = (i) => setSegments(s => s.filter((_, j) => j !== i))
   const updateSegment = (i, field, val) => setSegments(s => s.map((seg, j) => j === i ? { ...seg, [field]: val } : seg))
 
   const handleRun = async () => {
     if (!inputFile) { alert('יש לבחור קובץ.'); return }
-    if (!outputPath) { alert('יש לבחור נתיב פלט.'); return }
+    let resolvedOutput = outputPath
+    if (!resolvedOutput && extFile) {
+      // Auto-generate output path next to source file
+      const dot = inputFile.lastIndexOf('.')
+      const base = dot >= 0 ? inputFile.slice(0, dot) : inputFile
+      const ext2 = dot >= 0 ? inputFile.slice(dot) : ''
+      resolvedOutput = `${base}_trimmed${ext2}`
+    }
+    if (!resolvedOutput) { alert('יש לבחור נתיב פלט.'); return }
     const parsed = segments.map(s => ({ start: parseFloat(s.start) || 0, end: parseFloat(s.end) || 0 }))
     if (parsed.some(s => s.end <= s.start)) { alert('כל קטע חייב שהסוף יהיה אחרי ההתחלה.'); return }
     setStatus('מעבד...')
-    const res = await window.electronAPI?.trimMultiple({ inputPath: inputFile, outputPath, segments: parsed, exportMode })
+    const res = await window.electronAPI?.trimMultiple({ inputPath: inputFile, outputPath: resolvedOutput, segments: parsed, exportMode })
     setStatus(res?.success ? '✅ הושלם!' : `❌ ${res?.error}`)
   }
 

@@ -77,9 +77,13 @@ export function buildFFmpegCommand(inputPath, outputPath, settings, formatArgs) 
 
   if (settings.grayscale) vfFilters.push('hue=s=0')
 
+  if (settings.subtitleFile && fs.existsSync(settings.subtitleFile)) {
+    vfFilters.push(`subtitles=${settings.subtitleFile.replace(/\\/g, '/')}`)
+  }
+
   if (settings.watermarkPath) {
     cmd = cmd.input(settings.watermarkPath)
-    const scale = settings.watermarkScale || 0.2
+    const scale = settings.watermarkScale || 0.1
     const posMap = {
       topleft: '10:10', topright: 'W-w-10:10',
       bottomleft: '10:H-h-10', bottomright: 'W-w-10:H-h-10',
@@ -88,14 +92,10 @@ export function buildFFmpegCommand(inputPath, outputPath, settings, formatArgs) 
     const pos = posMap[settings.watermarkPosition || 'topleft']
     const wmFilter = `[1:v]scale=iw*${scale}:-1[wm]`
     const baseFilter = vfFilters.length > 0
-      ? `[0:v]${vfFilters.join(',')}[mainv];${wmFilter};[mainv][wm]overlay=${pos}`
-      : `${wmFilter};[0:v][wm]overlay=${pos}`
-    cmd = cmd.complexFilter([baseFilter]).outputOptions(['-c:a', 'copy'])
-  } else if (settings.watermark) {
-    vfFilters.push(`movie=${settings.watermark.replace(/\\/g, '/')},scale=200:-1[wm];[in][wm]overlay=10:10[out]`)
-  }
-
-  if (!settings.watermarkPath && vfFilters.length > 0) {
+      ? `[0:v]${vfFilters.join(',')}[mainv];${wmFilter};[mainv][wm]overlay=${pos}[out]`
+      : `${wmFilter};[0:v][wm]overlay=${pos}[out]`
+    cmd = cmd.complexFilter([baseFilter], '[out]').outputOptions(['-c:a', 'copy'])
+  } else if (vfFilters.length > 0) {
     cmd = cmd.videoFilters(vfFilters)
   }
 
@@ -140,15 +140,13 @@ export function buildFFmpegCommand(inputPath, outputPath, settings, formatArgs) 
   }
   cmd = cmd.outputOptions(['-threads', String(threadsPerJob)])
 
-  if (settings.subtitleFile && fs.existsSync(settings.subtitleFile)) {
-    cmd = cmd.outputOptions(['-vf', `subtitles=${settings.subtitleFile.replace(/\\/g, '/')}`])
-  }
-
   if (formatArgs && formatArgs.length > 0) {
     const notAlreadySet = formatArgs.filter((arg, i) => {
       const isFlag = arg.startsWith('-')
       if (!isFlag) return true
       const key = arg.split(':')[0].slice(1)
+      // Skip -vf from formatArgs if we already built vfFilters (would duplicate)
+      if (key === 'vf' && vfFilters.length > 0) return false
       const alreadySet = [
         settings.videoCodec && 'c',
         settings.audioCodec && 'c',
@@ -256,6 +254,7 @@ export function startConversion(taskId, inputPath, outputPath, settings, formatA
   const isBackground = settings.threadMode === 'background'
 
   const fallbackToCpu = () => {
+    try { if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath) } catch {}
     const cpuSettings = { ...settings, hwAccel: 'cpu' }
     const cpuCmd = buildFFmpegCommand(inputPath, outputPath, cpuSettings, formatArgs)
     runCmd(taskId, cpuCmd, 0, onProgress, onComplete, onError, null, isBackground)
