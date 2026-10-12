@@ -77,11 +77,24 @@ export function buildFFmpegCommand(inputPath, outputPath, settings, formatArgs) 
 
   if (settings.grayscale) vfFilters.push('hue=s=0')
 
-  if (settings.watermark) {
-    vfFilters.push(`movie=${settings.watermark.replace(/\\/g, '/')},scale=200:-1[wm];[in][wm]overlay=10:10[out]`)
+  if (settings.subtitleFile && fs.existsSync(settings.subtitleFile)) {
+    vfFilters.push(`subtitles=${settings.subtitleFile.replace(/\\/g, '/')}`)
   }
 
-  if (vfFilters.length > 0) {
+  if (settings.watermarkPath) {
+    cmd = cmd.input(settings.watermarkPath)
+    const scale = settings.watermarkScale || 0.1
+    const posMap = {
+      topleft: '10:10', topright: 'W-w-10:10',
+      bottomleft: '10:H-h-10', bottomright: 'W-w-10:H-h-10',
+      center: '(W-w)/2:(H-h)/2',
+    }
+    const pos = posMap[settings.watermarkPosition || 'topleft']
+    const baseFilter = vfFilters.length > 0
+      ? `[0:v]${vfFilters.join(',')}[mainv];[1:v][mainv]scale2ref=iw*${scale}:-1[wm][base];[base][wm]overlay=${pos}[out]`
+      : `[1:v][0:v]scale2ref=iw*${scale}:-1[wm][base];[base][wm]overlay=${pos}[out]`
+    cmd = cmd.complexFilter([baseFilter], '[out]').outputOptions(['-c:a', 'copy'])
+  } else if (vfFilters.length > 0) {
     cmd = cmd.videoFilters(vfFilters)
   }
 
@@ -94,18 +107,20 @@ export function buildFFmpegCommand(inputPath, outputPath, settings, formatArgs) 
   if (settings.sampleRate) cmd = cmd.audioFrequency(parseInt(settings.sampleRate))
   if (settings.channels) cmd = cmd.audioChannels(parseInt(settings.channels))
 
-  if (settings.volume) cmd = cmd.audioFilters(`volume=${settings.volume}`)
-  if (settings.normalize) cmd = cmd.audioFilters('dynaudnorm')
-  if (settings.fadeIn) cmd = cmd.audioFilters(`afade=t=in:d=${settings.fadeIn}`)
-  if (settings.fadeOut) cmd = cmd.audioFilters(`afade=t=out:d=${settings.fadeOut}`)
+  if (settings.noAudio) cmd = cmd.outputOptions(['-an'])
+  if (!settings.noAudio && settings.volume) cmd = cmd.audioFilters(`volume=${settings.volume}`)
+  if (!settings.noAudio && settings.normalize) cmd = cmd.audioFilters('dynaudnorm')
+  if (!settings.noAudio && settings.fadeIn) cmd = cmd.audioFilters(`afade=t=in:d=${settings.fadeIn}`)
+  if (!settings.noAudio && settings.fadeOut) cmd = cmd.audioFilters(`afade=t=out:d=${settings.fadeOut}`)
 
   if (settings.quality && !settings.videoCodec) {
     cmd = cmd.outputOptions(['-q:v', settings.quality])
   }
 
-  // Use fast preset for CPU encoding if not explicitly set
+  // Use fast preset for CPU encoding if not explicitly set (skip for audio-only outputs)
   const isGpuCodec = resolvedVideoCodec && (resolvedVideoCodec.includes('nvenc') || resolvedVideoCodec.includes('qsv') || resolvedVideoCodec.includes('amf'))
-  if (!isGpuCodec && !settings.preset && !settings.videoCodec) {
+  const hasNoVideoFlag = formatArgs && formatArgs.includes('-vn')
+  if (!isGpuCodec && !settings.preset && !settings.videoCodec && !hasNoVideoFlag) {
     cmd = cmd.outputOptions(['-preset', 'fast'])
   }
 
@@ -121,20 +136,21 @@ export function buildFFmpegCommand(inputPath, outputPath, settings, formatArgs) 
     threadsPerJob = Math.max(1, Math.floor(totalCores / 2))
   } else {
     // 'optimal': proportional — each job gets cores / activeJobs
-    const activeCount = Math.max(1, activeJobs.size)
+    const activeCount = Math.max(1, activeJobs.size + 1) // +1 for this job being added
     threadsPerJob = Math.max(1, Math.floor(totalCores / activeCount))
   }
   cmd = cmd.outputOptions(['-threads', String(threadsPerJob)])
 
-  if (settings.subtitleFile && fs.existsSync(settings.subtitleFile)) {
-    cmd = cmd.outputOptions(['-vf', `subtitles=${settings.subtitleFile.replace(/\\/g, '/')}`])
-  }
-
   if (formatArgs && formatArgs.length > 0) {
-    const notAlreadySet = formatArgs.filter((arg, i) => {
-      const isFlag = arg.startsWith('-')
-      if (!isFlag) return true
+    const skipIndices = new Set()
+    formatArgs.forEach((arg, i) => {
+      if (!arg.startsWith('-')) return
       const key = arg.split(':')[0].slice(1)
+      if (key === 'vf' && vfFilters.length > 0) {
+        skipIndices.add(i)
+        if (i + 1 < formatArgs.length && !formatArgs[i + 1].startsWith('-')) skipIndices.add(i + 1)
+        return
+      }
       const alreadySet = [
         settings.videoCodec && 'c',
         settings.audioCodec && 'c',
@@ -144,8 +160,9 @@ export function buildFFmpegCommand(inputPath, outputPath, settings, formatArgs) 
         settings.sampleRate && 'ar',
         settings.channels && 'ac',
       ].filter(Boolean)
-      return !alreadySet.some(s => key.includes(s))
+      if (alreadySet.some(s => key.includes(s))) skipIndices.add(i)
     })
+    const notAlreadySet = formatArgs.filter((_, i) => !skipIndices.has(i))
     if (notAlreadySet.length > 0) {
       cmd = cmd.outputOptions(notAlreadySet)
     }
@@ -242,15 +259,22 @@ export function startConversion(taskId, inputPath, outputPath, settings, formatA
   const isBackground = settings.threadMode === 'background'
 
   const fallbackToCpu = () => {
+    try { if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath) } catch {}
     const cpuSettings = { ...settings, hwAccel: 'cpu' }
     const cpuCmd = buildFFmpegCommand(inputPath, outputPath, cpuSettings, formatArgs)
     runCmd(taskId, cpuCmd, 0, onProgress, onComplete, onError, null, isBackground)
   }
 
-  // Get duration for accurate progress
+  // Get duration for accurate progress (captured in closure for fallback too)
   probeFile(inputPath).then(meta => {
     const totalDuration = meta?.format?.duration || 0
-    runCmd(taskId, cmd, totalDuration, onProgress, onComplete, onError, useGpu ? fallbackToCpu : null, isBackground)
+    const fallbackWithDuration = useGpu ? () => {
+      try { if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath) } catch {}
+      const cpuSettings = { ...settings, hwAccel: 'cpu' }
+      const cpuCmd = buildFFmpegCommand(inputPath, outputPath, cpuSettings, formatArgs)
+      runCmd(taskId, cpuCmd, totalDuration, onProgress, onComplete, onError, null, isBackground)
+    } : null
+    runCmd(taskId, cmd, totalDuration, onProgress, onComplete, onError, fallbackWithDuration, isBackground)
   }).catch(() => {
     runCmd(taskId, cmd, 0, onProgress, onComplete, onError, useGpu ? fallbackToCpu : null, isBackground)
   })
@@ -329,24 +353,36 @@ export async function mixAudio(inputPaths, outputPath, weights, settings, onProg
 export async function mergeVideos(inputPaths, outputPath, settings, onProgress) {
   return new Promise((resolve, reject) => {
     const listFile = outputPath + '.txt'
-    const listContent = inputPaths.map(p => `file '${p.replace(/'/g, "'\\''")}'`).join('\n')
-    fs.writeFileSync(listFile, listContent)
+    const fileTrimMap = settings?.fileTrimMap || {}
+
+    const listLines = inputPaths.flatMap(p => {
+      const escaped = p.replace(/\\/g, '\\\\').replace(/'/g, "\\'")
+      const trim = fileTrimMap[p]
+      const lines = [`file '${escaped}'`]
+      if (trim?.start != null) lines.push(`inpoint ${trim.start}`)
+      if (trim?.end != null) lines.push(`outpoint ${trim.end}`)
+      return lines
+    })
+    fs.writeFileSync(listFile, listLines.join('\n'))
 
     let cmd = ffmpeg()
       .input(listFile)
       .inputOptions(['-f', 'concat', '-safe', '0'])
 
-    // If not using copy codec, apply transcoding settings
+    const hasTranscoding = (settings?.videoCodec && settings.videoCodec !== 'copy') ||
+                           (settings?.audioCodec && settings.audioCodec !== 'copy')
+
     if (settings?.videoCodec && settings.videoCodec !== 'copy') {
       cmd = cmd.videoCodec(settings.videoCodec)
     }
     if (settings?.audioCodec && settings.audioCodec !== 'copy') {
       cmd = cmd.audioCodec(settings.audioCodec)
     }
-    if (settings?.audioBitrate) cmd = cmd.audioBitrate(settings.audioBitrate)
+    if (settings?.audioBitrate && settings.audioBitrate !== 'copy') {
+      cmd = cmd.audioBitrate(settings.audioBitrate)
+    }
 
-    // Default: stream copy for speed
-    if (!settings?.videoCodec || settings.videoCodec === 'copy') {
+    if (!hasTranscoding) {
       cmd = cmd.outputOptions(['-c', 'copy'])
     }
 
@@ -380,18 +416,21 @@ export async function splitVideo(inputPath, outputDir, segmentDuration) {
   })
 }
 
-export async function addWatermark(videoPath, watermarkPath, outputPath, position = 'topleft') {
-  const positions = {
-    topleft: 'overlay=10:10',
-    topright: 'overlay=W-w-10:10',
-    bottomleft: 'overlay=10:H-h-10',
+export async function addWatermark(videoPath, watermarkPath, outputPath, position = 'topleft', wmScale = 0.2) {
+  const overlayPos = {
+    topleft:     'overlay=10:10',
+    topright:    'overlay=W-w-10:10',
+    bottomleft:  'overlay=10:H-h-10',
     bottomright: 'overlay=W-w-10:H-h-10',
-    center: 'overlay=(W-w)/2:(H-h)/2',
+    center:      'overlay=(W-w)/2:(H-h)/2',
   }
+  const pos = overlayPos[position] || overlayPos.topleft
+  const filter = `[1:v][0:v]scale2ref=iw*${wmScale}:-1[wm][base];[base][wm]${pos}[out]`
   return new Promise((resolve, reject) => {
     ffmpeg(videoPath)
       .input(watermarkPath)
-      .complexFilter([`${positions[position] || positions.topleft}`])
+      .complexFilter([filter], '[out]')
+      .outputOptions(['-c:a', 'copy'])
       .output(outputPath)
       .on('end', resolve)
       .on('error', reject)
