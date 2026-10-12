@@ -39,28 +39,23 @@ jobs:
       - name: Delete existing release and tag if present
         shell: bash
         run: |
-          gh release delete v2.6.0 --yes --cleanup-tag 2>/dev/null || true
+          gh release delete v2.5.0 --yes --cleanup-tag 2>/dev/null || true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v2.6.0
-          name: פורמט נקי v2.6.0
+          tag_name: v2.5.0
+          name: פורמט נקי v2.5.0
           draft: false
           prerelease: false
           files: desktop/dist/*.exe
           body: |
-            ## פורמט נקי v2.6.0 — Windows
+            ## פורמט נקי v2.5.0 — Windows
 
             **מתקין:** הורד `*-Setup.exe` והתקן רגיל.
             **נייד:** הורד `*-Portable.exe` — הפעל ישירות ללא התקנה, לא כותב לרג'יסטרי.
-
-            ### חדש בגירסה 2.6
-            - 📄 המרת מסמכים: PDF → Word / טקסט / ODT / RTF
-            - הורדה חד-פעמית של LibreOffice Portable (~330MB) — עובד אופליין לתמיד
-            - הסרת התוכנה מוחקת את LibreOffice אוטומטית
 
             ### תיקוני באגים בגירסה 2.5.0
             - תיקון קריטי: סימן מים כיסה את כל הוידאו — קנה מידה חושב יחסית לסימן המים עצמו, עכשיו יחסי לוידאו

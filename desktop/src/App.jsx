@@ -28,7 +28,6 @@ import Queue from './components/Queue'
 import ConversionSetup from './components/ConversionSetup'
 import JoinWindow from './components/JoinWindow'
 import SettingsPage from './pages/SettingsPage'
-import DocumentsPage from './pages/DocumentsPage'
 import ToolsPage from './pages/ToolsPage'
 import {
   VIDEO_INPUT_EXTENSIONS, AUDIO_INPUT_EXTENSIONS, IMAGE_INPUT_EXTENSIONS,
@@ -373,8 +372,6 @@ export default function App() {
             <div style={{ flex: 1, overflow: 'auto' }}><SettingsPage /></div>
           ) : activeCategory === 'tools' ? (
             <ToolsPage />
-          ) : activeCategory === 'documents' ? (
-            <DocumentsPage />
           ) : (
             <FormatGrid />
           )}

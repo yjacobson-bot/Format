@@ -3,11 +3,6 @@ import path from 'path'
 import fs from 'fs'
 import { exec } from 'child_process'
 import {
-  isLibreOfficeInstalled,
-  downloadLibreOffice,
-  convertDocument,
-} from './libreofficeService.js'
-import {
   probeFile,
   startConversion,
   cancelConversion,
@@ -175,30 +170,6 @@ export function registerHandlers(mainWindow) {
       exec('shutdown /a')
     }
     return { success: true }
-  })
-
-  ipcMain.handle('docs:isLoInstalled', () => isLibreOfficeInstalled())
-
-  ipcMain.handle('docs:downloadLo', async (event) => {
-    try {
-      await downloadLibreOffice((pct) => {
-        mainWindow.webContents.send('docs:loDownloadProgress', pct)
-      })
-      return { success: true }
-    } catch (err) {
-      return { success: false, error: err.message }
-    }
-  })
-
-  ipcMain.handle('docs:convertDocument', async (event, { inputPath, outputPath }) => {
-    try {
-      await convertDocument(inputPath, outputPath, (pct) => {
-        mainWindow.webContents.send('docs:convertProgress', { pct })
-      })
-      return { success: true, outputPath }
-    } catch (err) {
-      return { success: false, error: err.message }
-    }
   })
 
   ipcMain.on('app:confirm-close', () => {

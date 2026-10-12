@@ -56,15 +56,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return () => ipcRenderer.removeListener(`menu:${action}`, handler)
   },
 
-  isLoInstalled: () => ipcRenderer.invoke('docs:isLoInstalled'),
-  downloadLo: () => ipcRenderer.invoke('docs:downloadLo'),
-  convertDocument: (params) => ipcRenderer.invoke('docs:convertDocument', params),
-  onLoDownloadProgress: (cb) => {
-    const handler = (_, pct) => cb(pct)
-    ipcRenderer.on('docs:loDownloadProgress', handler)
-    return () => ipcRenderer.removeListener('docs:loDownloadProgress', handler)
-  },
-
   confirmClose: () => ipcRenderer.send('app:confirm-close'),
   cancelClose: () => ipcRenderer.send('app:cancel-close'),
   onCheckClose: (callback) => {
