@@ -59,10 +59,17 @@ export async function convertDocument(inputPath, outputPath, onProgress) {
 
   onProgress && onProgress(5)
 
+  const userInstall = path.join(app.getPath('temp'), 'lo-userinstall')
+  fs.mkdirSync(userInstall, { recursive: true })
+
   await new Promise((resolve, reject) => {
     execFile(
       exe,
-      ['--headless', '--convert-to', outputExt, '--outdir', outputDir, inputPath],
+      [
+        '--headless', '--norestore', '--nofirststartwizard',
+        `--userinstallation=file:///${userInstall.replace(/\\/g, '/')}`,
+        '--convert-to', outputExt, '--outdir', outputDir, inputPath,
+      ],
       { timeout: 120_000, shell: false },
       (err) => {
         if (err) reject(new Error(`המרה נכשלה: ${err.message}`))
