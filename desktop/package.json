@@ -36,7 +36,7 @@
     "appId": "com.openformatfactory.app",
     "productName": "פורמט נקי",
     "directories": { "output": "dist" },
-    "files": ["out/**/*", "!node_modules/.cache"],
+    "files": ["out/**/*"],
     "asarUnpack": [
       "node_modules/@ffmpeg-installer/**",
       "node_modules/@ffprobe-installer/**"
