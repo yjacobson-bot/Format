@@ -58,7 +58,8 @@ function TrimEditor({ filePath, duration, trim, onChange, category }) {
   const timelineRef = useRef(null)
   const [currentTime, setCurrentTime] = useState(0)
   const [loaded, setLoaded] = useState(false)
-  const dur = duration || 300
+  const [mediaDur, setMediaDur] = useState(null)
+  const dur = duration || mediaDur || 300
   const start = trim?.start ?? 0
   const end = trim?.end ?? dur
 
@@ -109,14 +110,14 @@ function TrimEditor({ filePath, duration, trim, onChange, category }) {
         category === 'video' ? (
           <video ref={videoRef} src={fileUrl}
             style={{ width: '100%', maxHeight: 160, background: '#000', borderRadius: 2 }}
-            onLoadedMetadata={() => setLoaded(true)}
+            onLoadedMetadata={e => { setLoaded(true); setMediaDur(e.target.duration) }}
             onTimeUpdate={e => setCurrentTime(e.target.currentTime)}
             controls
           />
         ) : (
           <audio ref={videoRef} src={fileUrl}
             style={{ width: '100%' }}
-            onLoadedMetadata={() => setLoaded(true)}
+            onLoadedMetadata={e => { setLoaded(true); setMediaDur(e.target.duration) }}
             onTimeUpdate={e => setCurrentTime(e.target.currentTime)}
             controls
           />
