@@ -26,25 +26,6 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Download and bundle LibreOffice Portable
-        shell: powershell
-        run: |
-          $url = "https://download.documentfoundation.org/libreoffice/portable/24.8.7/LibreOfficePortablePrevious_24.8.7_MultilingualAll.paf.exe"
-          $installer = "$env:TEMP\lo_installer.exe"
-          Write-Host "Downloading LibreOffice Portable..."
-          Invoke-WebRequest -Uri $url -OutFile $installer -UseBasicParsing
-          Write-Host "Download complete. Size: $([math]::Round((Get-Item $installer).Length / 1MB, 1)) MB"
-          New-Item -ItemType Directory -Force -Path "resources\libreoffice" | Out-Null
-          Write-Host "Extracting with 7-Zip..."
-          & "C:\Program Files\7-Zip\7z.exe" x $installer -o"resources\libreoffice" -y
-          Write-Host "Done. Top-level files:"
-          Get-ChildItem "resources\libreoffice" | Select-Object -First 10
-          Write-Host "Searching for soffice.exe..."
-          Get-ChildItem "resources\libreoffice" -Recurse -Filter "soffice.exe" | Select-Object FullName
-          Write-Host "Searching for LibreOfficePortable.exe..."
-          Get-ChildItem "resources\libreoffice" -Recurse -Filter "LibreOfficePortable.exe" | Select-Object FullName
-        working-directory: desktop
-
       - name: Build Windows EXE
         run: npm run build:win
 
@@ -76,10 +57,9 @@ jobs:
             **מתקין:** הורד `*-Setup.exe` והתקן רגיל.
             **נייד:** הורד `*-Portable.exe` — הפעל ישירות ללא התקנה, לא כותב לרג'יסטרי.
 
-            ### חדש בגירסה 2.6
-            - 📄 המרת מסמכים: PDF → Word / טקסט / ODT / RTF — כלול בתוכנה, ללא הורדה נוספת
-            - LibreOffice Portable מוטמע מראש בתוך המתקין (~440MB סה"כ)
-            - הסרת התוכנה מוחקת הכל אוטומטית
+            ### חדש / תוקן בגירסה 2.6
+            - תיקון: חיתוך רצועה — מזהה עכשיו את אורך הקובץ האמיתי (לא 5 דקות ברירת מחדל)
+            - תיקון: מיזוג וידאו — לא מגביל יותר לאורך קצוב, מותאם לכל אורך
 
             ### תיקוני באגים בגירסה 2.5.0
             - תיקון קריטי: סימן מים כיסה את כל הוידאו — קנה מידה חושב יחסית לסימן המים עצמו, עכשיו יחסי לוידאו

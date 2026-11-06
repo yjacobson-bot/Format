@@ -366,6 +366,17 @@ export default function JoinWindow() {
             )}
           </div>
 
+          {/* Same-format notice */}
+          {!isAudio && (
+            <div style={{
+              background: '#fff8e1', border: '1px solid #f59e0b', borderRadius: 4,
+              padding: '6px 10px', fontSize: 10, color: '#92400e', display: 'flex', gap: 6, alignItems: 'flex-start',
+            }}>
+              <span style={{ fontSize: 14, flexShrink: 0 }}>⚠️</span>
+              <span>כל הקבצים חייבים להיות <strong>מאותו קודק ורזולוציה</strong>. אם לא — המר אותם קודם לאותו פורמט דרך טאב הוידאו.</span>
+            </div>
+          )}
+
           {/* Mode toggle — audio only */}
           {isAudio && (
             <div style={{ display: 'flex', gap: 0, border: '1px solid #b0bcd0', borderRadius: 5, overflow: 'hidden', alignSelf: 'flex-start' }}>
